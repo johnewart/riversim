@@ -1,0 +1,18 @@
+{% extends "rivers/kml/base.kml" %}
+{% block placemarks %}
+	<Style id="lidarPolyLine">
+      <LineStyle>
+        <color>0f000000</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>0f3333333</color>
+      </PolyStyle>
+    </Style>
+{% for tile in geomdata %}
+  <Placemark>
+    <name>{% if tile.name %}{{ tile.name }}{% else %}{{ place }}{% endif %}</name>
+    <description>{{tile.name}}</description>
+    <styleUrl>#lidarPolyLine</styleUrl>
+    {{ tile.kml|safe }}
+  </Placemark>{% endfor %}{% endblock %}

@@ -1,0 +1,36 @@
+#featuredata {
+    position:relative;
+    top:    -600px;
+    left:   602px;
+    height: 400px;
+    width:  300px;
+}
+
+#featuretable {
+    width:  300px;
+}
+
+#base {
+    position: relative;
+}
+
+#map {
+    position: relative;
+    top:      0;
+    right:    0;
+    height:   600px;
+    width:    900px;
+    border:   1px solid black;
+    float: left;
+}
+
+#riverselection { 
+    float: left;
+    width: 200px;
+    margin-left: 15px;
+}
+
+select.riverselect { 
+    height: 600px;
+    width: 180px;
+}

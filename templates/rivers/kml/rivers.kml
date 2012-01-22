@@ -1,0 +1,18 @@
+{% extends "rivers/kml/base.kml" %}
+{% block placemarks %}
+	<Style id="riverPolyLine">
+      <LineStyle>
+        <color>7fff0000</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>7f00ff00</color>
+      </PolyStyle>
+    </Style>
+{% for river in geomdata %}
+  <Placemark>
+    <name>{% if river.name %}{{ river.name }}{% else %}Unknown River{% endif %}</name>
+    <description>{{river.name}}</description>
+    <styleUrl>#riverPolyLine</styleUrl>
+    {{ river.kml|safe }}
+  </Placemark>{% endfor %}{% endblock %}
