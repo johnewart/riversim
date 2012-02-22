@@ -2,8 +2,9 @@ var RIVERSIM = RIVERSIM || {};
 
 var map=null;
 
+
 $(document).ready(function() {
-   OLinit();
+		OLinit();
 });
   
 function OLinit() {
@@ -104,6 +105,43 @@ function OLinit() {
                 }
   );
 
+  var cdec_control = new OpenLayers.Control.SelectFeature(cdec_stations);
+
+  function cdec_onPopupClose(evt) { 
+    rivers_control.unselect(this.feature);  
+  }
+
+  function cdec_select(evt) {
+     feature = evt.feature;
+     popup = new OpenLayers.Popup.FramedCloud(this.name + " Popup",
+                                              feature.geometry.getBounds().getCenterLonLat(),
+                                              new OpenLayers.Size(100,100),
+                                              "<h2>"+feature.data.name + "</h2><h3>" + feature.data.description + "</h3>",
+                                              null,
+                                              true,
+                                              cdec_onPopupClose);
+     feature.popup = popup;
+     popup.feature = feature;
+     map.addPopup(popup);
+  }
+  
+  function cdec_unselect(evt) {
+     feature = evt.feature;
+     if (feature.popup) {
+        popup.feature = null;
+        map.removePopup(feature.popup);
+        feature.popup.destroy();
+        feature.popup=null;
+     }
+  }
+  
+  map.addControl(cdec_control);
+
+  cdec_control.activate();
+  cdec_stations.events.on({ 'featureselected': cdec_select, 
+                            'featureunselected': cdec_unselect });
+
+
   // Generic stuff..
   var maplayers = [ osm, lidar_tiles, selected_lidar_tiles, rivers, cdec_stations,];
   map.addLayers(maplayers);
@@ -130,7 +168,6 @@ function toggleRiverSelection() {
 }
    
 $(document).ready(function() { 
-
     $('.riverselect').change(function() {
         toggleRiverSelection();
     });
