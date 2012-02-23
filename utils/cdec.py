@@ -1,7 +1,13 @@
 # URL: http://cdec.water.ca.gov/cgi-progs/staSearch?staid=&sensor=&dur=&active=&loc_chk=on&lon1=118&lon2=120&lat1=34&lat2=39&nearby=&basin=&hydro=&county=&operator=&display=staid
-from lxml import etree
+import re
+import sys
 import urllib 
-from riversim.rivers.models import * 
+
+from lxml import etree
+from datetime import datetime
+from riversim import rivers
+from traceback import print_exc
+
 
 def fetch_cdec_stations():
     min_long = -124.4
@@ -70,15 +76,100 @@ def get_station_meta(station_id):
     except IndexError:
         print "Couldn't parse HTML"
 
-if __name__ == "__main__":
-    from riversim.rivers.models import *
-    station_ids = fetch_cdec_stations()
-    for station_id in station_ids:
+def get_station_sensors(station):
+    try:
+        cdec_datasource = rivers.models.DataSource.objects.get(name='CDEC')
+    except rivers.models.DataSource.DoesNotExist:
+        cdec_datasource = rivers.models.DataSource.objects.create(name = 'CDEC')
+
+    url = "http://cdec.water.ca.gov/cgi-progs/selectQuery?station_id=%s" % (station.station_id)
+    content = urllib.urlopen(url).read()
+    tree = etree.HTML(content)
+    try:
+        rows = tree.xpath("//div[@class='column_inner']/table")[0].xpath('//tr')
+
+        for row in rows:
+            try:
+                sensor_id = row[0].text
+                description_cell = etree.tostring(row[1], method='text')
+                source = cdec_datasource
+                print "Description: %s" % (description_cell)
+                m = re.search('(.*)\s\(\s*(.*?)\s*\).*', description_cell)
+                description = m.group(1)
+                measurement_unit = m.group(2)
+                duration_code = re.search('\((\w+)\)', row[2].text).group(1) 
+                try:
+                    sensortype = rivers.models.SensorType.objects.get(source = cdec_datasource, sensor_id = sensor_id, duration_code = duration_code)
+                except rivers.models.SensorType.DoesNotExist:
+                    sensortype = rivers.models.SensorType.objects.create(source = cdec_datasource, sensor_id = sensor_id, name = description, measurement_unit = measurement_unit, duration_code = duration_code)
+                
+                try:
+                   sensor = rivers.models.Sensor.objects.get(station = station, type = sensortype)
+                except rivers.models.Sensor.DoesNotExist:
+                   sensor = rivers.models.Sensor.objects.create(station = station, type = sensortype)
+
+            except:
+                print "Unexpected error:", sys.exc_info()[0]
+                print_exc()
+       
+    except IndexError:
+        print "Unable to parse HTML"
+
+def get_sensor_data(station, sensor_type, start_date, end_date):
+    if sensor_type.duration_code == 'hourly':
+        duration_code = 'H'
+    elif sensor_type.duration_code == 'event':
+        duration_code = 'E' 
+
+    csv_url_template = "http://cdec.water.ca.gov/cgi-progs/queryCSV?station_id={station_id}&sensor_num={sensor_id}&dur_code={duration_code}&start_date={start_date}&end_date={end_date}&data_wish=View+CSV+Data"
+    url = csv_url_template.format(
+            station_id = station.station_id, 
+            sensor_id = sensor_type.sensor_id, 
+            duration_code = duration_code, 
+            start_date = start_date.strftime("%Y/%m/%d"), 
+            end_date = end_date.strftime("%Y/%m/%d")
+          )
+    csvdata = urllib.urlopen(url).read()
+
+    try:
+        sensor = rivers.models.Sensor.objects.get(station = station, type = sensor_type)
+    except rivers.models.Sensor.DoesNotExist:
+        sensor = rivers.models.Sensor.objects.create(station = station, type = sensor_type)
+
+
+    # Remove data from the existing time window since we don't want duplicates
+    existing_measurements = sensor.measurement_set.filter(timestamp__gte =
+            start_date).filter(timestamp__lte = end_date)
+    existing_measurements.delete()
+
+    lines = csvdata.split("\r\n")
+
+    for line in lines[2:-1]:
+        (date,time,sample) = line.split(",")
+        dtstr = "%s%s" % (date, time)
+        dt = datetime.strptime(dtstr, '%Y%m%d%H%M')
+        print "Creating measurement: %s // %s @ %s" % (dt, sample, sensor)
         try:
-            CDECStation.objects.get(station_id = station_id)
-        except CDECStation.DoesNotExist:
-            metadata = get_station_meta(station_id)
-            if metadata != None:
-                print "Creating a new CDEC Station for %s" % (metadata)
-                station = CDECStation(**metadata)
-                station.save()
+            measurement = rivers.models.Measurement.objects.create(sensor = sensor, value = sample, timestamp = dt)
+        except: 
+            print "Unable to create measurement..."
+    return csvdata 
+
+def get_all_sensor_data(station, start_date, end_date):
+    sensors = station.sensor_set.all()
+    for sensor in sensors:
+        get_sensor_data(station, sensor.type, start_date, end_date)
+
+#if __name__ == "__main__":
+#    stations = CDECStation.objects.all()
+#    for station in stations:
+#    station_ids = fetch_cdec_stations()
+#    for station_id in station_ids:
+#        try:
+#            CDECStation.objects.get(station_id = station_id)
+#        except CDECStation.DoesNotExist:
+#            metadata = get_station_meta(station_id)
+#            if metadata != None:
+#                print "Creating a new CDEC Station for %s" % (metadata)
+#                station = CDECStation(**metadata)
+#                station.save()
