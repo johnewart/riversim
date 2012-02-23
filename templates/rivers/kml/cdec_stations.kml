@@ -2,11 +2,16 @@
 {% block placemarks %}
 	<Style id="cdecPointStyle">
         <IconStyle>
+            <scale>0.5</scale>
             <Icon>
-                <href>http://maps.google.com/mapfiles/kml/pushpin/blue-pushpin.png</href> 
+                <href>/static/images/rangerstation.png</href> 
             </Icon>
         </IconStyle>
-    </Style>
+				<LabelStyle>
+					 <color>000000</color>
+					 <scale>1.0</scale>
+				</LabelStyle>
+	</Style>
 {% for station in geomdata %}
   <Placemark>
     <name>{% if station.station_id %}{{ station.station_id }}{% else %}Unknown Station{% endif %}</name>
