@@ -9,8 +9,12 @@ from django.http import Http404
 from django.contrib.gis import feeds
 from django.db.models import Q
 from django.contrib.gis.measure import Distance, D
+from django.core import serializers
 
 from riversim.rivers import models
+
+import datetime
+import json
 
 AVAILABLE_LAYERS = { 
         'rivers': { 
@@ -55,7 +59,43 @@ def home(request):
                 
                 
     return render_to_response('rivers/map.html', {'river_names' : river_names})
+
+def stationdata(request, type, station_id):
+    try:
+        if type == "cdec":
+            station = models.CDECStation.objects.get(pk=station_id)
+        else:
+            station = models.Station.objects.get(pk=station_id)
+    except:
+        station = None
     
+    start_date = request.GET.get('start_date', datetime.date.today() - datetime.timedelta(days=7))
+    end_date   = request.GET.get('start_date', datetime.date.today())
+
+    sensors = station.sensor_set.all()
+    sensordata = {}
+    for sensor in sensors:
+        data = []
+        measurements = sensor.measurement_set.filter(timestamp__gte =
+                start_date).filter(timestamp__lte = end_date).order_by('timestamp')
+        for measurement in measurements:
+            point = {
+                'x': measurement.timestamp.strftime("%Y-%m-%d %H:%M"),
+                'y': measurement.value,
+            }
+            data.append(point)
+
+        if len(data) > 0: 
+            sensordata[sensor] = json.dumps(data)
+    
+    params = {
+        'station': station,
+        'sensordata': sensordata,
+        'start_date': start_date, 
+        'end_date': end_date,
+    }
+    return render_to_response('rivers/stationdata.html', params)
+
 def filter_rivers(request):
     print "NARF: %s" % (request.GET)
     try:
@@ -145,7 +185,7 @@ def kml(request, layer=None):
                 stationQ = Q()
                 stations_nearby = []
                 for river in rivers:
-                    stations = models.CDECStation.objects.filter(geom__dwithin=(river.geom, .0005))
+                    stations = models.CDECStation.objects.filter(geom__dwithin=(river.geom, 0.02))
                     stations_nearby.extend(stations)
               
                 station_ids = [s.id for s in stations_nearby]
