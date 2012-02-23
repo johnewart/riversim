@@ -1,37 +1,92 @@
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db import models
 
-class CDECStation(models.Model):
+import datetime 
+
+from riversim.utils import cdec
+
+class DataSource(models.Model):
+    name = models.CharField(max_length = 255)
+
+class SensorType(models.Model):
+    name = models.CharField(max_length = 255)
+    description = models.TextField()
+    measurement_unit = models.CharField(max_length = 100)
+    sensor_id = models.CharField(max_length=100) # Arbitrary identifier for external data
+    source = models.ForeignKey(DataSource, blank=True, null=True, on_delete=models.SET_NULL)
+    duration_code = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return "%s (%s) via %s" % (self.name, self.measurement_unit, self.source.name)
+
+class Station(models.Model):
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    elevation  = models.FloatField()
+    geom = models.PointField(srid=4326, db_column='the_geom')
+    sensor_types = models.ManyToManyField(SensorType, through='Sensor')
+    objects = models.GeoManager()
+    last_updated_data = models.DateTimeField(null = True, blank = True)
+
+    def save(self):
+        self.geom = Point(self.longitude, self.latitude)
+        super(Station, self).save()
+
+class Sensor(models.Model):
+    station = models.ForeignKey(Station)
+    type = models.ForeignKey(SensorType)
+
+    def __str__(self):
+        return "%s :: %s" % (self.station, self.type)
+
+class TimeWindow(models.Model):
+    name = models.CharField(max_length=100)
+    duration = models.IntegerField() # Time in seconds that this time window covers
+
+class Measurement(models.Model):
+    sensor = models.ForeignKey(Sensor)
+    time_window = models.ForeignKey(TimeWindow, blank=True, null=True, on_delete=models.SET_NULL)
+    value = models.FloatField()
+    timestamp = models.DateTimeField()
+
+class CDECStation(Station):
     station_id = models.CharField(max_length = 8)
     river_basin = models.CharField(max_length = 255)
     hydrologic_area = models.CharField(max_length = 255)
-    latitude = models.FloatField()
-    longitude = models.FloatField()
     operator = models.CharField(max_length = 255)
-    elevation  = models.FloatField()
     county = models.CharField(max_length = 255) 
     nearby_city = models.CharField(max_length = 255)
-    geom = models.PointField(srid=4326, db_column='the_geom')
+
     objects = models.GeoManager()
 
+
+    def update_sensor_data(self):
+        try:
+            start_date = self.last_updated_data
+            if start_date == None:
+                start_date = datetime.date.today() - datetime.timedelta(days = 7)
+            end_date = datetime.datetime.today()
+            cdec.get_all_sensor_data(self, start_date, end_date)
+            self.last_updated_data = datetime.datetime.now()
+            self.save()
+        except:
+            raise "Unable to update sensor data!"
+
+    def update_sensor_list(self):
+        cdec.get_station_sensors(self)
+
     def save(self):
-        # Place code here, which is excecuted the same
-        # time the ``pre_save``-signal would be
-        self.geom = Point(self.longitude, self.latitude)
-
-        # Call parent's ``save`` function
         super(CDECStation, self).save()
+        self.update_sensor_list()
+ 
+    def __str__(self):
+        return "CDEC Station '%s'" % (self.station_id)
 
-        # Place code here, which is excecuted the same
-        # time the ``post_save``-signal would be
-    
-
-# Create your models here.
 class River(models.Model):
     gid = models.AutoField(primary_key=True)
     arc_status = models.IntegerField()
     arc_identi = models.IntegerField()
-    name = models.CharField(max_length=65)
+    name = models.CharField(max_length = 65)
     min_x_axis = models.FloatField()
     max_x_axis = models.FloatField()
     min_y_axis = models.FloatField()
