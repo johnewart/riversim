@@ -1,4 +1,4 @@
-{% extends "rivers/kml/base.kml" %}
+{% extends "riversim/kml/base.kml" %}
 {% block placemarks %}
 	<Style id="riverPolyLine">
       <LineStyle>

@@ -9,62 +9,62 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding model 'DataSource'
-        db.create_table('rivers_datasource', (
+        db.create_table('riversim_datasource', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
         ))
-        db.send_create_signal('rivers', ['DataSource'])
+        db.send_create_signal('riversim', ['DataSource'])
 
         # Adding model 'SensorType'
-        db.create_table('rivers_sensortype', (
+        db.create_table('riversim_sensortype', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('description', self.gf('django.db.models.fields.TextField')()),
             ('measurement_unit', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('sensor_id', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('source', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['rivers.DataSource'])),
+            ('source', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['riversim.DataSource'])),
         ))
-        db.send_create_signal('rivers', ['SensorType'])
+        db.send_create_signal('riversim', ['SensorType'])
 
         # Adding model 'Station'
-        db.create_table('rivers_station', (
+        db.create_table('riversim_station', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('latitude', self.gf('django.db.models.fields.FloatField')()),
             ('longitude', self.gf('django.db.models.fields.FloatField')()),
             ('elevation', self.gf('django.db.models.fields.FloatField')()),
             ('geom', self.gf('django.contrib.gis.db.models.fields.PointField')(db_column='the_geom')),
         ))
-        db.send_create_signal('rivers', ['Station'])
+        db.send_create_signal('riversim', ['Station'])
 
         # Adding model 'Sensor'
-        db.create_table('rivers_sensor', (
+        db.create_table('riversim_sensor', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('station', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['rivers.Station'])),
-            ('type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['rivers.SensorType'])),
+            ('station', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['riversim.Station'])),
+            ('type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['riversim.SensorType'])),
         ))
-        db.send_create_signal('rivers', ['Sensor'])
+        db.send_create_signal('riversim', ['Sensor'])
 
         # Adding model 'TimeWindow'
-        db.create_table('rivers_timewindow', (
+        db.create_table('riversim_timewindow', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('duration', self.gf('django.db.models.fields.IntegerField')()),
         ))
-        db.send_create_signal('rivers', ['TimeWindow'])
+        db.send_create_signal('riversim', ['TimeWindow'])
 
         # Adding model 'Measurement'
-        db.create_table('rivers_measurement', (
+        db.create_table('riversim_measurement', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('sensor', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['rivers.Sensor'])),
-            ('time_window', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['rivers.TimeWindow'])),
+            ('sensor', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['riversim.Sensor'])),
+            ('time_window', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['riversim.TimeWindow'])),
             ('value', self.gf('django.db.models.fields.FloatField')()),
             ('timestamp', self.gf('django.db.models.fields.DateTimeField')()),
         ))
-        db.send_create_signal('rivers', ['Measurement'])
+        db.send_create_signal('riversim', ['Measurement'])
 
         # Adding model 'CDECStation'
-        db.create_table('rivers_cdecstation', (
-            ('station_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['rivers.Station'], unique=True, primary_key=True)),
+        db.create_table('riversim_cdecstation', (
+            ('station_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['riversim.Station'], unique=True, primary_key=True)),
             ('station_id', self.gf('django.db.models.fields.CharField')(max_length=8)),
             ('river_basin', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('hydrologic_area', self.gf('django.db.models.fields.CharField')(max_length=255)),
@@ -72,10 +72,10 @@ class Migration(SchemaMigration):
             ('county', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('nearby_city', self.gf('django.db.models.fields.CharField')(max_length=255)),
         ))
-        db.send_create_signal('rivers', ['CDECStation'])
+        db.send_create_signal('riversim', ['CDECStation'])
 
         # Adding model 'River'
-        db.create_table('rivers_river', (
+        db.create_table('riversim_river', (
             ('gid', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('arc_status', self.gf('django.db.models.fields.IntegerField')()),
             ('arc_identi', self.gf('django.db.models.fields.IntegerField')()),
@@ -112,10 +112,10 @@ class Migration(SchemaMigration):
             ('sequence_n', self.gf('django.db.models.fields.CharField')(max_length=22)),
             ('geom', self.gf('django.contrib.gis.db.models.fields.MultiLineStringField')(srid=4269, db_column='the_geom')),
         ))
-        db.send_create_signal('rivers', ['River'])
+        db.send_create_signal('riversim', ['River'])
 
         # Adding model 'LidarTile'
-        db.create_table('rivers_lidartile', (
+        db.create_table('riversim_lidartile', (
             ('gid', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('tile', self.gf('django.db.models.fields.CharField')(max_length=18)),
             ('northindex', self.gf('django.db.models.fields.IntegerField')()),
@@ -154,10 +154,10 @@ class Migration(SchemaMigration):
             ('desc1', self.gf('django.db.models.fields.CharField')(max_length=254)),
             ('geom', self.gf('django.contrib.gis.db.models.fields.PolygonField')(srid=50000, db_column='the_geom')),
         ))
-        db.send_create_signal('rivers', ['LidarTile'])
+        db.send_create_signal('riversim', ['LidarTile'])
 
         # Adding model 'OrthoTile'
-        db.create_table('rivers_orthotile', (
+        db.create_table('riversim_orthotile', (
             ('gid', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=254)),
             ('desc_field', self.gf('django.db.models.fields.CharField')(max_length=254)),
@@ -199,59 +199,59 @@ class Migration(SchemaMigration):
             ('ortho_subm', self.gf('django.db.models.fields.CharField')(max_length=254)),
             ('geom', self.gf('django.contrib.gis.db.models.fields.PolygonField')(srid=50000, db_column='the_geom')),
         ))
-        db.send_create_signal('rivers', ['OrthoTile'])
+        db.send_create_signal('riversim', ['OrthoTile'])
 
 
     def backwards(self, orm):
         
         # Deleting model 'DataSource'
-        db.delete_table('rivers_datasource')
+        db.delete_table('riversim_datasource')
 
         # Deleting model 'SensorType'
-        db.delete_table('rivers_sensortype')
+        db.delete_table('riversim_sensortype')
 
         # Deleting model 'Station'
-        db.delete_table('rivers_station')
+        db.delete_table('riversim_station')
 
         # Deleting model 'Sensor'
-        db.delete_table('rivers_sensor')
+        db.delete_table('riversim_sensor')
 
         # Deleting model 'TimeWindow'
-        db.delete_table('rivers_timewindow')
+        db.delete_table('riversim_timewindow')
 
         # Deleting model 'Measurement'
-        db.delete_table('rivers_measurement')
+        db.delete_table('riversim_measurement')
 
         # Deleting model 'CDECStation'
-        db.delete_table('rivers_cdecstation')
+        db.delete_table('riversim_cdecstation')
 
         # Deleting model 'River'
-        db.delete_table('rivers_river')
+        db.delete_table('riversim_river')
 
         # Deleting model 'LidarTile'
-        db.delete_table('rivers_lidartile')
+        db.delete_table('riversim_lidartile')
 
         # Deleting model 'OrthoTile'
-        db.delete_table('rivers_orthotile')
+        db.delete_table('riversim_orthotile')
 
 
     models = {
-        'rivers.cdecstation': {
-            'Meta': {'object_name': 'CDECStation', '_ormbases': ['rivers.Station']},
+        'riversim.cdecstation': {
+            'Meta': {'object_name': 'CDECStation', '_ormbases': ['riversim.Station']},
             'county': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'hydrologic_area': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'nearby_city': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'operator': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'river_basin': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'station_id': ('django.db.models.fields.CharField', [], {'max_length': '8'}),
-            'station_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['rivers.Station']", 'unique': 'True', 'primary_key': 'True'})
+            'station_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['riversim.Station']", 'unique': 'True', 'primary_key': 'True'})
         },
-        'rivers.datasource': {
+        'riversim.datasource': {
             'Meta': {'object_name': 'DataSource'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
-        'rivers.lidartile': {
+        'riversim.lidartile': {
             'Meta': {'object_name': 'LidarTile'},
             'affinepara': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
             'areaunit': ('django.db.models.fields.CharField', [], {'max_length': '254'}),
@@ -291,15 +291,15 @@ class Migration(SchemaMigration):
             'tile_st': ('django.db.models.fields.CharField', [], {'max_length': '7'}),
             'to': ('django.db.models.fields.CharField', [], {'max_length': '7'})
         },
-        'rivers.measurement': {
+        'riversim.measurement': {
             'Meta': {'object_name': 'Measurement'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'sensor': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['rivers.Sensor']"}),
-            'time_window': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['rivers.TimeWindow']"}),
+            'sensor': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['riversim.Sensor']"}),
+            'time_window': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['riversim.TimeWindow']"}),
             'timestamp': ('django.db.models.fields.DateTimeField', [], {}),
             'value': ('django.db.models.fields.FloatField', [], {})
         },
-        'rivers.orthotile': {
+        'riversim.orthotile': {
             'Meta': {'object_name': 'OrthoTile'},
             'affinepara': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
             'area': ('django.db.models.fields.FloatField', [], {}),
@@ -342,7 +342,7 @@ class Migration(SchemaMigration):
             'subclass_field': ('django.db.models.fields.FloatField', [], {}),
             'tile': ('django.db.models.fields.CharField', [], {'max_length': '18'})
         },
-        'rivers.river': {
+        'riversim.river': {
             'Meta': {'object_name': 'River'},
             'arc_id': ('django.db.models.fields.IntegerField', [], {}),
             'arc_iden_1': ('django.db.models.fields.IntegerField', [], {}),
@@ -380,13 +380,13 @@ class Migration(SchemaMigration):
             'type': ('django.db.models.fields.CharField', [], {'max_length': '12'}),
             'up_directi': ('django.db.models.fields.CharField', [], {'max_length': '12'})
         },
-        'rivers.sensor': {
+        'riversim.sensor': {
             'Meta': {'object_name': 'Sensor'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'station': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['rivers.Station']"}),
-            'type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['rivers.SensorType']"})
+            'station': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['riversim.Station']"}),
+            'type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['riversim.SensorType']"})
         },
-        'rivers.sensortype': {
+        'riversim.sensortype': {
             'Meta': {'object_name': 'SensorType'},
             'description': ('django.db.models.fields.TextField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -394,16 +394,16 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'sensor_id': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
         },
-        'rivers.station': {
+        'riversim.station': {
             'Meta': {'object_name': 'Station'},
             'elevation': ('django.db.models.fields.FloatField', [], {}),
             'geom': ('django.contrib.gis.db.models.fields.PointField', [], {'db_column': "'the_geom'"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'latitude': ('django.db.models.fields.FloatField', [], {}),
             'longitude': ('django.db.models.fields.FloatField', [], {}),
-            'sensor_types': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['rivers.SensorType']", 'through': "orm['rivers.Sensor']", 'symmetrical': 'False'})
+            'sensor_types': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['riversim.SensorType']", 'through': "orm['riversim.Sensor']", 'symmetrical': 'False'})
         },
-        'rivers.timewindow': {
+        'riversim.timewindow': {
             'Meta': {'object_name': 'TimeWindow'},
             'duration': ('django.db.models.fields.IntegerField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -411,4 +411,4 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['rivers']
+    complete_apps = ['riversim']

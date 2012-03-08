@@ -1,0 +1,22 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+    <div id="simulation">
+        <h1><a href="{%  url edit_simulation simulation_id=simulation.id %}">{{ simulation.name }}</a></h1>
+
+        <h2>Rivers</h2>
+        <ul>
+        {% for river in simulation.rivers.all %}
+            <li>{{ river.name }}</li>
+        {% endfor %}
+        </ul>
+
+        <h2>Stations</h2>
+        <ul>
+            {% for station in simulation.stations.all %}
+                <li>{{ station }}</li>
+            {% endfor %}
+        </ul>
+
+    </div>
+{% endblock %}

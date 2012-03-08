@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>RiverSim</title>
+
+    <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/map.css">
+    <link type="text/css" rel="stylesheet" href="/static/css/charts.css"/>
+
+    <script type="text/javascript">
+        var RIVERSIM = RIVERSIM || {};
+        RIVERSIM.layers = {
+            "rivers": {
+                "url": "{% url kml layer='rivers' %}"
+            },
+            "lidartiles": {
+                "url": "{% url kml layer='lidartiles' %}"
+            },
+            "selected_lidartiles": {
+                "url": "{% url kml layer='selectedlidartiles' %}"
+            },
+            "cdec_stations": {
+                "url": "{% url kml layer='cdec_stations' %}"
+            }
+        };
+        RIVERSIM.urls = {
+            "filter_rivers": "{% url filter_rivers %}",
+            "create_simulation": "{% url create_simulation  %}"
+        };
+    </script>
+    <script type="text/javascript" src="http://openlayers.org/dev/OpenLayers.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script>
+    <script type="text/javascript" src="/static/js/map.js"></script>
+    <script type="text/javascript" src="/static/js/d3/d3.js"></script>
+    <script type="text/javascript" src="/static/js/d3/d3.time.js"></script>
+</head>
+<body>
+    <div id="header">
+        <div id="logo"><h1>RiverSim</h1></div>
+        <div id="login">
+            {% if user.is_authenticated %}
+                <p>Welcome, {{ user.username }}.</p>
+            {% else %}
+            <form action="{%  url login %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="narf" value="foo">
+                <input type="text" name="username">
+                <input type="password" name="password">
+                <input type="submit" value="Login">
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    <div id="body">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

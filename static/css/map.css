@@ -14,6 +14,10 @@
     position: relative;
 }
 
+#simulations {
+    width: 960px;
+}
+
 #map {
     position: relative;
     top:      0;
@@ -33,4 +37,8 @@
 select.riverselect { 
     height: 600px;
     width: 180px;
+}
+
+div.clear {
+    clear: both;
 }

@@ -1,11 +1,11 @@
 # URL: http://cdec.water.ca.gov/cgi-progs/staSearch?staid=&sensor=&dur=&active=&loc_chk=on&lon1=118&lon2=120&lat1=34&lat2=39&nearby=&basin=&hydro=&county=&operator=&display=staid
 import re
 import sys
-import urllib 
+import urllib
+import riversim
 
 from lxml import etree
 from datetime import datetime
-from riversim import rivers
 from traceback import print_exc
 
 
@@ -78,9 +78,9 @@ def get_station_meta(station_id):
 
 def get_station_sensors(station):
     try:
-        cdec_datasource = rivers.models.DataSource.objects.get(name='CDEC')
-    except rivers.models.DataSource.DoesNotExist:
-        cdec_datasource = rivers.models.DataSource.objects.create(name = 'CDEC')
+        cdec_datasource = riversim.models.DataSource.objects.get(name='CDEC')
+    except riversim.models.DataSource.DoesNotExist:
+        cdec_datasource = riversim.models.DataSource.objects.create(name = 'CDEC')
 
     url = "http://cdec.water.ca.gov/cgi-progs/selectQuery?station_id=%s" % (station.station_id)
     content = urllib.urlopen(url).read()
@@ -99,14 +99,14 @@ def get_station_sensors(station):
                 measurement_unit = m.group(2)
                 duration_code = re.search('\((\w+)\)', row[2].text).group(1) 
                 try:
-                    sensortype = rivers.models.SensorType.objects.get(source = cdec_datasource, sensor_id = sensor_id, duration_code = duration_code)
-                except rivers.models.SensorType.DoesNotExist:
-                    sensortype = rivers.models.SensorType.objects.create(source = cdec_datasource, sensor_id = sensor_id, name = description, measurement_unit = measurement_unit, duration_code = duration_code)
+                    sensortype = riversim.models.SensorType.objects.get(source = cdec_datasource, sensor_id = sensor_id, duration_code = duration_code)
+                except riversim.models.SensorType.DoesNotExist:
+                    sensortype = riversim.models.SensorType.objects.create(source = cdec_datasource, sensor_id = sensor_id, name = description, measurement_unit = measurement_unit, duration_code = duration_code)
                 
                 try:
-                   sensor = rivers.models.Sensor.objects.get(station = station, type = sensortype)
-                except rivers.models.Sensor.DoesNotExist:
-                   sensor = rivers.models.Sensor.objects.create(station = station, type = sensortype)
+                   sensor = riversim.models.Sensor.objects.get(station = station, type = sensortype)
+                except riversim.models.Sensor.DoesNotExist:
+                   sensor = riversim.models.Sensor.objects.create(station = station, type = sensortype)
 
             except:
                 print "Unexpected error:", sys.exc_info()[0]
@@ -132,9 +132,9 @@ def get_sensor_data(station, sensor_type, start_date, end_date):
     csvdata = urllib.urlopen(url).read()
 
     try:
-        sensor = rivers.models.Sensor.objects.get(station = station, type = sensor_type)
-    except rivers.models.Sensor.DoesNotExist:
-        sensor = rivers.models.Sensor.objects.create(station = station, type = sensor_type)
+        sensor = riversim.models.Sensor.objects.get(station = station, type = sensor_type)
+    except riversim.models.Sensor.DoesNotExist:
+        sensor = riversim.models.Sensor.objects.create(station = station, type = sensor_type)
 
 
     # Remove data from the existing time window since we don't want duplicates
@@ -150,7 +150,7 @@ def get_sensor_data(station, sensor_type, start_date, end_date):
         dt = datetime.strptime(dtstr, '%Y%m%d%H%M')
         print "Creating measurement: %s // %s @ %s" % (dt, sample, sensor)
         try:
-            measurement = rivers.models.Measurement.objects.create(sensor = sensor, value = sample, timestamp = dt)
+            measurement = riversim.models.Measurement.objects.create(sensor = sensor, value = sample, timestamp = dt)
         except: 
             print "Unable to create measurement..."
     return csvdata 

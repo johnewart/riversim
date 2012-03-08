@@ -1,9 +1,10 @@
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db import models
+from django.contrib.auth.models import User
 
 import datetime 
 
-from riversim.utils import cdec
+from flumen.utils import cdec
 
 class DataSource(models.Model):
     name = models.CharField(max_length = 255)
@@ -32,14 +33,55 @@ class Station(models.Model):
         self.geom = Point(self.longitude, self.latitude)
         super(Station, self).save()
 
+    def __str__(self):
+        if self.cdecstation:
+            return self.cdecstation.station_id
+        else:
+            return "Lat: %f, Long: %f" % (self.latitude, self.longitude)
+
 class Sensor(models.Model):
     station = models.ForeignKey(Station)
     type = models.ForeignKey(SensorType)
 
+    # Filters for chart_data property
+    start_date = None
+    end_date = None
+
     def __str__(self):
         return "%s :: %s" % (self.station, self.type)
 
+    def setDataWindow(self, start_date, end_date):
+        self.start_date = start_date
+        self.end_date = end_date
+
+    def getChartData(self):
+        data = []
+        measurements = self.measurement_set
+
+        if (self.start_date != None):
+            measurements.filter(timestamp__gte = self.start_date)
+
+        if (self.end_date != None):
+            measurements.filter(timestamp__lte = self.end_date)
+
+
+        for measurement in measurements.order_by('timestamp'):
+            point = {
+                'x': measurement.timestamp.strftime("%Y-%m-%d %H:%M"),
+                'y': measurement.value,
+            }
+            data.append(point)
+
+        if len(data) == 0:
+            return None
+        else:
+            return data
+
+    chart_data = property(getChartData)
+
 class TimeWindow(models.Model):
+
+
     name = models.CharField(max_length=100)
     duration = models.IntegerField() # Time in seconds that this time window covers
 
@@ -119,7 +161,9 @@ class River(models.Model):
     sequence_n = models.CharField(max_length=22)
     geom = models.MultiLineStringField(srid=4269, db_column='the_geom')
     objects = models.GeoManager()
-    
+
+    def __str__(self):
+        return self.name
     
 # Auto-generated `LayerMapping` dictionary for River model
 river_mapping = {
@@ -325,3 +369,9 @@ orthotile_mapping = {
     'ortho_subm' : 'ORTHO_SUBM',
     'geom' : 'POLYGON',
 }
+
+class Simulation(models.Model):
+    user = models.ForeignKey(User)
+    name = models.CharField(max_length=200, blank=True, null=True, default="New Simulation")
+    rivers = models.ManyToManyField(River)
+    stations = models.ManyToManyField(Station)

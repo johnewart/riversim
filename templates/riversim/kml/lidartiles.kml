@@ -1,12 +1,12 @@
-{% extends "rivers/kml/base.kml" %}
+{% extends "riversim/kml/base.kml" %}
 {% block placemarks %}
 	<Style id="lidarPolyLine">
       <LineStyle>
-        <color>2f000000</color>
+        <color>0f000000</color>
         <width>2</width>
       </LineStyle>
       <PolyStyle>
-        <color>2f0000ff</color>
+        <color>0f3333333</color>
       </PolyStyle>
     </Style>
 {% for tile in geomdata %}

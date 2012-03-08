@@ -1,5 +1,11 @@
 # Django settings for riversim project.
 import os
+import logging
+
+logging.basicConfig(
+    level = logging.DEBUG,
+    format = '%(asctime)s %(levelname)s %(message)s',
+)
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -104,7 +110,7 @@ MIDDLEWARE_CLASSES = (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
-ROOT_URLCONF = 'riversim.urls'
+ROOT_URLCONF = 'flumen.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -123,7 +129,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.gis',
     'django_extensions',
-    'riversim.rivers',
+    'riversim',
     'debug_toolbar',
     'south'
     # Uncomment the next line to enable the admin:

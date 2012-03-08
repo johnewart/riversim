@@ -1,4 +1,4 @@
-{% extends "rivers/kml/base.kml" %}
+{% extends "riversim/kml/base.kml" %}
 {% block placemarks %}
 	<Style id="cdecPointStyle">
         <IconStyle>
@@ -15,7 +15,11 @@
 {% for station in geomdata %}
   <Placemark>
     <name>{% if station.station_id %}{{ station.station_id }}{% else %}Unknown Station{% endif %}</name>
-    <description>{{station.river_basin}} -- {{station.operator}}</description>
+    <description>
+          <![CDATA[
+            {{station.river_basin}} -- {{station.operator}}<a href='{% url station_data station_id=station.id type='cdec' %}'>Show Data</a>
+          ]]>
+    </description>
     <styleUrl>#cdecPointStyle</styleUrl>
     {{ station.kml|safe }}
   </Placemark>{% endfor %}{% endblock %}

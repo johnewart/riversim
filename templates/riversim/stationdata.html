@@ -1,0 +1,13 @@
+{% extends "base_layout.html" %}
+
+{% load chart_tags %}
+
+{% block content %}
+    <h1>{{ station }}</h1>
+    <h2>Data for {{ start_date }} through {{ end_date }}</h2>
+
+    {% for sensor in sensors %}
+    <h3>{{ sensor }}</h3>
+    {% sensor_chart sensor.id %}
+    {% endfor %}
+{% endblock %}

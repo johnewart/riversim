@@ -4,7 +4,6 @@
     <title>Line Chart</title>
     <link type="text/css" rel="stylesheet" href="/static/css/line.css"/>
     <script type="text/javascript" src="/static/js/d3/d3.js"></script>
-    <script type="text/javascript" src="/static/js/d3/d3.time.js"></script>
   <style type="text/css">
 body {
   font: 13px sans-serif;
@@ -14,7 +13,7 @@ rect {
   fill: #fff;
 }
 
-div.chart {
+#chart {
     background-color: #F7F2C5;
     width: 960px;
     height: 500px;
@@ -40,21 +39,12 @@ circle.selected {
     </style>
   </head>
 	<body>
-		<h1>{{ station }}</h1>
-		<h2>Data for {{ start_date }} through {{ end_date }}</h2>
-		{% for sensor, points in sensordata.items %}
-		<h3>{{ sensor }}</h3> 
-		<div id="chart-{{ sensor.id }}" class="chart"></div>
+		<h2>{{ station }}</h2>
+    <div id="chart"></div>
+    <label for="interpolate">Interpolate:</label>
+    <select id="interpolate"></select>
     <script type="text/javascript">
 
-			var points = {{ points|safe }};
-var parse = d3.time.format("%Y-%m-%d %H:%M").parse;
-var i = 0; 
-points.forEach(function(p) { 
-		p.x = parse(p.x); 
-		});
-var minDate = new Date(points[0].x); 
-var maxDate = new Date(points[points.length-1].x);
 var size = [890, 450],
     padding = [20, 30, 20, 40], // top right bottom left
     mw = size[0] - padding[1] - padding[3],
@@ -62,10 +52,15 @@ var size = [890, 450],
     tx = function(d) { return "translate(" + x(d) + ",0)"; },
     ty = function(d) { return "translate(0," + y(d) + ")"; },
     stroke = function(d) { return d ? "#ccc" : "#666"; },
+    points = d3.range(1, 10).map(function(i) { 
+        return {x: i * size[0] / 5, y:  50 + Math.random() * (size[1] - 100)}; 
+    }),
     // x-scale
-    x = d3.time.scale()
-        .domain([minDate, maxDate])
-        .range([0, mw]),
+    x = d3.scale.linear()
+        .domain([d3.min(points, function(d) { return d.x; }), d3.max(points, function(d) { return d.x; })])
+        .nice()
+        .range([0, mw])
+        .nice(),
     // drag x-axis logic
     downscalex = x.copy(),
     downx = Math.NaN,
@@ -77,14 +72,14 @@ var size = [890, 450],
         .nice(),
     line = d3.svg.line()
         .x(function(d, i) { return x(points[i].x); })
-				.y(function(d, i) { return y(points[i].y); }),
+        .y(function(d, i) { return y(points[i].y); }),
     // drag x-axis logic
     downscaley = y.copy(),
     downy = Math.NaN,
     dragged = null,
     selected = points[0];
 
-var vis = d3.select("#chart-{{ sensor.id }}").append("svg:svg")
+var vis = d3.select("#chart").append("svg:svg")
     .attr("width", size[0] + padding[3] + padding[1])
     .attr("height", size[1] + padding[0] + padding[2])
     // .style("background-fill", "#FFEEB6")
@@ -142,8 +137,7 @@ d3.select("#interpolate")
 function update() {
   var lines = vis.select("path").attr("d", line(points));
         
-	/*
-		 var circle = vis.selectAll("circle")
+  var circle = vis.selectAll("circle")
       .data(points, function(d) { return d; });
 
   circle.enter().append("svg:circle")
@@ -165,8 +159,7 @@ function update() {
       .attr("cx",    function(d) { return x(d.x); })
       .attr("cy",    function(d) { return y(d.y); });
 
-			circle.exit().remove();
-			*/
+  circle.exit().remove();
 
   if (d3.event && d3.event.keyCode) {
     d3.event.preventDefault();
@@ -311,38 +304,38 @@ d3.select('body')
         rupy = downscaley.invert(p[1]),
         yaxis1 = downscaley.domain()[1],
         yaxis2 = downscaley.domain()[0],
-					yextent = yaxis2 - yaxis1;
-				if (rupy != 0) {
-						var changey, new_domain;
-						changey = downy / rupy;
-						new_domain = [yaxis1 + (yextent * changey), yaxis1];
-						y.domain(new_domain);
-						redraw();
-				}
-				d3.event.preventDefault();
-				d3.event.stopPropagation();
-			}
-		})
-		.on("mouseup", function(d) {
-				if (!isNaN(downx)) {
-						redraw();
-						downx = Math.NaN;
-						d3.event.preventDefault();
-						d3.event.stopPropagation();
-						// graph.call(d3.behavior.zoom().on("zoom", redraw));
-				};
-				if (!isNaN(downy)) {
-						redraw();
-						downy = Math.NaN;
-						d3.event.preventDefault();
-						d3.event.stopPropagation();
-						// graph.call(d3.behavior.zoom().on("zoom", redraw));
-				};
-				// d3.event.preventDefault();
-				// d3.event.stopPropagation();
-		});
+        yextent = yaxis2 - yaxis1;
+      if (rupy != 0) {
+          var changey, new_domain;
+          changey = downy / rupy;
+          new_domain = [yaxis1 + (yextent * changey), yaxis1];
+          y.domain(new_domain);
+          redraw();
+      }
+      d3.event.preventDefault();
+      d3.event.stopPropagation();
+    }
+  })
+  .on("mouseup", function(d) {
+      if (!isNaN(downx)) {
+          redraw();
+          downx = Math.NaN;
+          d3.event.preventDefault();
+          d3.event.stopPropagation();
+          // graph.call(d3.behavior.zoom().on("zoom", redraw));
+      };
+      if (!isNaN(downy)) {
+          redraw();
+          downy = Math.NaN;
+          d3.event.preventDefault();
+          d3.event.stopPropagation();
+          // graph.call(d3.behavior.zoom().on("zoom", redraw));
+      };
+      // d3.event.preventDefault();
+      // d3.event.stopPropagation();
+  });
 
-			</script>
-		{% endfor %}
+    </script>
+
   </body>
 </html>
