@@ -1,0 +1,63 @@
+
+{% if sensor.chart_data %}
+<div class="chart_container">
+    <div id="y_axis-{{ sensor.id }}" class="y_axis"></div>
+    <div id="chart-{{ sensor.id }}" class="mychart"></div>
+    <div id="legend-{{ sensor.id }}" class="legend"></div>
+    <div id="timeline-{{ sensor.id }}"></div>
+    <div id="slider-{{ sensor.id }}"></div>
+</div>
+<div class="clear"></div>
+
+
+<script type="text/javascript">
+
+var graph = new Rickshaw.Graph( {
+    renderer: 'line',
+    element: document.querySelector('#chart-{{ sensor.id }}'),
+    width: 400,
+    height: 250,
+    series: [
+        {
+            name: "{{ sensor.type.name }}",
+            color: 'black',
+            data: {{ sensor.chart_data|safe }}
+        }
+    ]
+} );
+
+graph.render();
+
+var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+    graph: graph
+} );
+
+var annotator = new Rickshaw.Graph.Annotate( {
+    graph: graph,
+    element: document.getElementById('timeline-{{ sensor.id }}')
+} );
+
+var slider = new Rickshaw.Graph.RangeSlider( {
+    graph: graph,
+    element: document.getElementById('slider-{{ sensor.id }}')
+} );
+
+/*var legend = new Rickshaw.Graph.Legend( {
+    element: document.querySelector('#legend-{{ sensor.id }}'),
+    graph: graph
+} );*/
+var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
+
+var y_axis = new Rickshaw.Graph.Axis.Y( {
+    graph: graph,
+    orientation: 'left',
+    element: document.getElementById('y_axis-{{ sensor.id }}')
+} );
+
+y_axis.render();
+
+
+</script>
+{%  else %}
+    <h2>No data!</h2>
+{% endif %}

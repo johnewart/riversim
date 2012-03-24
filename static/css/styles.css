@@ -1,8 +1,22 @@
-* { 
-	font-size: 9pt;
-    font-family: "Proxima Nova", "Ubuntu", "Segoe UI", "Arial", sans-serif;
-}
+body                           { background: #fff; font-family: "Myriad Pro", serif; font-size: 1.3em; line-height: 1.3em; margin: 0 auto; }
+#main                          { margin: 0 auto; position:relative; width: 1000px; margin-top: 20px; }
+#header                        { padding: 0px; width: 800px; margin-top: 10px; height: 40px;}
+#content                       { float:left; width: 800px; background-color: #f5f5f5; padding: 14px; border: solid 1px #ccc; min-height: 200px; font-size: 13px;}
+#content p.img                 { text-align: center; margin: 0; padding: 0;}
+#content img                   { margin: 0; }
+#content p                     { width: 720px; }
+#footer                        { height: 50px; clear: both; text-align: center; font-size: 0.7em; color: #666; }
+#sidebar                       { float: left; margin: 4px 0 0 0; width: 120px; background-color: #e1e1e1; border-top-right-radius: 4px; border-bottom-right-radius: 4px; padding: 10px 10px 10px 0; font-size: 0.6em; list-style-type: none; }
+#sidebar a:hover               { text-decoration: none; }
+#sidebar li                    { margin-left: 0px; }
+#login                         { float: right; }
+#logo                          { float: left; }
+#logo h1                       { font-size: 18pt; margin: 0px; }
+div.clear                      { clear: both; }
+.black_button                  { background-color: #ccc; color: #000; text-transform: uppercase; font-weight: bold; padding: 6px 10px 4px 10px; }
 
-h1 { 
-    font-size: 18pt;
-}
+#simulations                   {  }
+#simulations label             { width: 90px; text-align: right; font-weight: bold; display: inline-block;}
+#model label                   { width: 90px; text-align: right; font-weight: bold; display: inline-block; vertical-align: top; margin-right: 10px;}
+
+#map                           { font-size: 11px;}

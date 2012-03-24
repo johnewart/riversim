@@ -119,7 +119,11 @@ def get_sensor_data(station, sensor_type, start_date, end_date):
     if sensor_type.duration_code == 'hourly':
         duration_code = 'H'
     elif sensor_type.duration_code == 'event':
-        duration_code = 'E' 
+        duration_code = 'E'
+    elif sensor_type.duration_code == 'daily':
+        duration_code = 'D'
+    else:
+        print "Sensor Type ID: %d with unknown duration code: %s" % (sensor_type.id, sensor_type.duration_code)
 
     csv_url_template = "http://cdec.water.ca.gov/cgi-progs/queryCSV?station_id={station_id}&sensor_num={sensor_id}&dur_code={duration_code}&start_date={start_date}&end_date={end_date}&data_wish=View+CSV+Data"
     url = csv_url_template.format(

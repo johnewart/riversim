@@ -1,0 +1,47 @@
+{% extends "base_layout.html" %}
+
+{% load chart_tags %}
+
+{% block content %}
+    <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
+    <style>
+        .sensorchart {
+            font-family: Arial, Helvetica, sans-serif;
+            width: 720px;
+            display: block;
+            margin-bottom: 40px;
+        }
+        .mychart {
+            position: relative;
+        }
+        .rickshaw_graph .y_ticks {
+            left: 0;
+        }
+        .y_axis {
+            position: absolute;
+            width: 40px;
+            float: left;
+        }
+        .legend {
+
+        }
+        .slider {
+            width: 100%;
+            border: 1px solid #888;
+            margin-top: 10px;
+        }
+
+    </style>
+
+    <h1>{{ station }}</h1>
+    <h2>Data for {{ start_date }} through {{ end_date }}</h2>
+    <a href="{%  url sync_station station_id=station.id %}">Sync data</a>
+
+    {% for sensor in sensors %}
+     <div class="sensorchart">
+     <h3>{{ sensor }}</h3>
+    {% sensor_chart sensor.id %}
+     </div>
+     <div class="clear"></div>
+    {% endfor %}
+{% endblock %}

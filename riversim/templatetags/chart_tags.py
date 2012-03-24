@@ -10,4 +10,4 @@ def sensor_chart(sensor_id):
     return {'sensor': sensor}
 
 
-register.inclusion_tag('riversim/tags/sensor_chart.html')(sensor_chart)
+register.inclusion_tag('riversim/tags/sensor_chart_rickshaw.html')(sensor_chart)

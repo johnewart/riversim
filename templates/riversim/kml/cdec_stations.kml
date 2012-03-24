@@ -14,10 +14,11 @@
 	</Style>
 {% for station in geomdata %}
   <Placemark>
+    <id>{{ station.id }}</id>
     <name>{% if station.station_id %}{{ station.station_id }}{% else %}Unknown Station{% endif %}</name>
     <description>
           <![CDATA[
-            {{station.river_basin}} -- {{station.operator}}<a href='{% url station_data station_id=station.id type='cdec' %}'>Show Data</a>
+            {{station.river_basin}} -- {{station.operator}}<a href='{% url show_station station_id=station.id %}'>Show Data</a>
           ]]>
     </description>
     <styleUrl>#cdecPointStyle</styleUrl>

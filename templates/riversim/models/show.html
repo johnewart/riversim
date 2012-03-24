@@ -1,0 +1,40 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+    <div id="model">
+        <h1><a href="{%  url edit_model model_id=model.id %}">{{ model.name }}</a></h1>
+
+        <h2>Parameters</h2>
+        <ul>
+            {%  for model_parameter in model_parameters %}
+                <li>
+                <a href="{% url edit_model_parameter model_parameter_id=model_parameter.id %}">{{ model_parameter.name }}</a><br/>
+                <p>
+                    <label>Short Name:</label> {{ model_parameter.short_name }}<br/>
+                    <label>Units:</label> {{ model_parameter.units }}<br/>
+                    <label>Description:</label> {{ model_parameter.description }}<br/>
+                </p>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $('#add_parameter').ajaxForm(function() {
+                    alert("Added parameter!");
+                });
+            });
+        </script>
+
+        <form id="add_parameter" action="{% url create_model_parameter model_id=model.id %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="model_parameter['model_id']" value="{{ model.id }}"><br/>
+            <label>Name:</label><input type="text" name="model_parameter['name']"><br/>
+            <label>Short Name:</label><input type="text" name="model_parameter['short_name']"><br/>
+            <label>Units:</label><input type="text" name="model_parameter['units']"><br/>
+            <label>Description:</label><textarea name="model_parameter['description']" rows="15" cols="40"></textarea>
+            <p><input type="submit"></p>
+        </form>
+    </div>
+
+{% endblock %}

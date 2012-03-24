@@ -1,0 +1,14 @@
+{% extends "base_layout.html" %}
+
+{% load chart_tags %}
+
+{% block content %}
+    {% if stations %}
+        <ul>
+        {% for station in stations %}
+             <li>{{ station }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+{% endblock %}

@@ -1,6 +1,44 @@
 {% extends "base_layout.html" %}
 
 {% block content %}
+    <script type="text/javascript">
+        {% if simulation %}
+            zoomExtent = new OpenLayers.Bounds{{  simulation.region.extent }};
+        {% else %}
+            zoomExtent = null;
+        {% endif %}
+
+        $(document).ready(function() {
+            riversimInit(zoomExtent);
+
+            {% if simulation.start_point %}
+            var start_point = new OpenLayers.LonLat({{ simulation.start_point.x }}, {{ simulation.start_point.y }});
+                start_point = start_point.transform(request_projection, view_projection);
+            var start_marker = new OpenLayers.Marker(start_point);
+            markers.addMarker(start_marker);
+            {% endif %}
+
+            {% if simulation.end_point %}
+            var end_point = new OpenLayers.LonLat({{ simulation.end_point.x }}, {{ simulation.end_point.y }});
+                end_point = end_point.transform(request_projection, view_projection);
+            var end_marker = new OpenLayers.Marker(end_point);
+            markers.addMarker(end_marker);
+            {% endif %}
+        });
+    </script>
+
+    <div id="map">
+    </div>
+
+    <div class="clear"></div>
+
+    <div id="map_actions">
+        <a href="#" onclick="selectSimulationStartPoint();">Set start point</a>
+        <a href="#" onclick="selectSimulationEndPoint();">Set end point</a>
+
+
+    </div>
+
     <div id="simulation">
         <h1><a href="{%  url edit_simulation simulation_id=simulation.id %}">{{ simulation.name }}</a></h1>
 
@@ -12,11 +50,18 @@
         </ul>
 
         <h2>Stations</h2>
-        <ul>
+        <div>
             {% for station in simulation.stations.all %}
-                <li>{{ station }}</li>
+                <a href="{% url show_station station_id=station.id %}">{{ station }}</a>&nbsp;
             {% endfor %}
-        </ul>
+        </div>
 
+        <h2>Runs</h2>
+        <a href="{% url new_simulation_run simulation_id=simulation.id %}">Create New</a>
+        <ul>
+            {% for run in simulation.runs.all %}
+                <li>{{ run }}</li>
+            {% endfor  %}
+        </ul>
     </div>
 {% endblock %}

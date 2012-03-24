@@ -1,35 +1,36 @@
 {% extends "base_layout.html" %}
 {% block content %}
     <script type="text/javascript">
+        {% if simulation %}
+        zoomExtent = new OpenLayers.Bounds{{  simulation.region.extent }};
+        {% else %}
+        zoomExtent = null;
+        {% endif %}
+
         $(document).ready(function() {
-            riversimInit();
+            riversimInit(zoomExtent);
         });
     </script>
 
     <div id="map">
     </div>
 
-    <div id="riverselection">
-        <select class="riverselect" multiple>
-        {% for entry in river_names %}
-             {% if entry.selected %}
-                <option value="{{entry.name}}" selected="selected" onChange="toggleRiver()">{{entry.name|title}}</option>
-             {% else %}
-                <option value="{{entry.name}}" onChange="toggleRiver()">{{entry.name|title}}</option>
-             {% endif %}
-        {% endfor %}
-        </select>
-    </div>
-
     <div class="clear"></div>
+
+    <div id="map_actions">
+        <a href="#" onclick="createSimulationFromMap();">Create a new simulation from selection</a>
+
+        {% if simulation %}
+        <a href="?clear_simulation=1">Clear simulation</a>
+        {% endif %}
+    </div>
 
     <div id="simulations">
     <h2>Simulations</h2>
-    <a href="{% url new_simulation %}">Create a new simulation</a>
     {% if simulations  %}
         <ul>
         {% for simulation in simulations %}
-            <li></li><a href="{% url show_simulation simulation_id=simulation.id %}">{{ simulation.name }}</a></li>
+            <li><a href="{% url show_simulation simulation_id=simulation.id %}">{{ simulation }}</a></li>
         {% endfor %}
         </ul>
     {% else %} 

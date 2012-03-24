@@ -4,10 +4,6 @@
 <head>
     <title>RiverSim</title>
 
-    <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/map.css">
-    <link type="text/css" rel="stylesheet" href="/static/css/charts.css"/>
-
     <script type="text/javascript">
         var RIVERSIM = RIVERSIM || {};
         RIVERSIM.layers = {
@@ -25,36 +21,68 @@
             }
         };
         RIVERSIM.urls = {
+            "select_rivers": "{% url select_rivers %}",
             "filter_rivers": "{% url filter_rivers %}",
-            "create_simulation": "{% url create_simulation  %}"
+            "create_simulation": "{% url create_simulation  %}",
+            "update_simulation": "{% url update_simulation simulation_id=1 %}",
+            "station_sensors": "{% url station_sensors  %}",
+            "closest_point_on_river": "{% url closest_point_on_river %}"
         };
     </script>
-    <script type="text/javascript" src="http://openlayers.org/dev/OpenLayers.js"></script>
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.min.js"></script>
-    <script type="text/javascript" src="http://www.openstreetmap.org/openlayers/OpenStreetMap.js"></script>
-    <script type="text/javascript" src="/static/js/map.js"></script>
+
+    <!-- jQuery and plugins -->
+    <script type="text/javascript" src="/static/js/jquery-1.7.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.form.js"></script>
+
+    <!-- OpenLayers / OSM / etc. -->
+    <script type="text/javascript" src="/static/js/osm/OpenLayers.js"></script>
+    <script type="text/javascript" src="/static/js/osm/OpenStreetMap.js"></script>
+
+    <! -- D3 and rickshaw for charts -->
     <script type="text/javascript" src="/static/js/d3/d3.js"></script>
+    <script type="text/javascript" src="/static/js/d3/d3.layout.min.js"></script>
     <script type="text/javascript" src="/static/js/d3/d3.time.js"></script>
+    <script type="text/javascript" src="/static/js/rickshaw.js"></script>
+
+    <!-- Local scripts and styles -->
+    <script type="text/javascript" src="/static/js/map.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/map.css">
+    <link type="text/css" rel="stylesheet" href="/static/css/charts.css"/>
+    <link type="text/css" rel="stylesheet" href="/static/css/rickshaw.min.css">
+
 </head>
 <body>
-    <div id="header">
-        <div id="logo"><h1>RiverSim</h1></div>
-        <div id="login">
-            {% if user.is_authenticated %}
-                <p>Welcome, {{ user.username }}.</p>
-            {% else %}
-            <form action="{%  url login %}" method="POST">
-                {% csrf_token %}
-                <input type="hidden" name="narf" value="foo">
-                <input type="text" name="username">
-                <input type="password" name="password">
-                <input type="submit" value="Login">
-            </form>
-            {% endif %}
+    <div id="main">
+        <div id="header">
+            <div id="logo"><h1><a href="/">RiverSim</a></h1></div>
+            <div id="login">
+                {% if user.is_authenticated %}
+                    <p>Welcome, {{ user.username }}.</p>
+                {% else %}
+                    <form action="{%  url login %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="narf" value="foo">
+                        <input type="text" name="username">
+                        <input type="password" name="password">
+                        <input type="submit" value="Login">
+                    </form>
+                {% endif %}
+            </div>
+            <div class="clear"></div>
         </div>
-    </div>
-    <div id="body">
-        {% block content %}{% endblock %}
+        <div class="clear"></div>
+        <div id="content">
+            {% block content %}{% endblock %}
+        </div>
+        <ol id="sidebar">
+            <li><a href="/" class="black_button">Home</a></li>
+            <li><a href="{% url list_models %}" class="black_button">Models</a></li>
+            <li><a href="{% url list_simulations %}" class="black_button">Simulations</a></li>
+            <li><a href="{% url list_stations %}" class="black_button">Stations</a></li>
+            <li><a href="{% url login %}" class="black_button">Log In</a></li>
+        </ol>
     </div>
 </body>
 </html>

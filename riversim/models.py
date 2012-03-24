@@ -3,6 +3,7 @@ from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 
 import datetime 
+from time import mktime
 
 from flumen.utils import cdec
 
@@ -67,7 +68,8 @@ class Sensor(models.Model):
 
         for measurement in measurements.order_by('timestamp'):
             point = {
-                'x': measurement.timestamp.strftime("%Y-%m-%d %H:%M"),
+                'x': mktime(measurement.timestamp.timetuple()),
+                #'x': measurement.timestamp.strftime("%Y-%m-%d %H:%M"),
                 'y': measurement.value,
             }
             data.append(point)
@@ -112,7 +114,7 @@ class CDECStation(Station):
             self.last_updated_data = datetime.datetime.now()
             self.save()
         except:
-            raise "Unable to update sensor data!"
+            raise
 
     def update_sensor_list(self):
         cdec.get_station_sensors(self)
@@ -287,7 +289,7 @@ lidartile_mapping = {
 class OrthoTile(models.Model):
     gid = models.AutoField(primary_key=True)
     name = models.CharField(max_length=254)
-    desc_field = models.CharField(max_length=254)
+    desc_field = models.CharField(max_length=254, db_column='desc_', null=True, blank=True)
     entitytype = models.CharField(max_length=254)
     enttypdesc = models.CharField(max_length=254)
     id = models.FloatField()
@@ -309,11 +311,11 @@ class OrthoTile(models.Model):
     desc1 = models.CharField(max_length=254)
     area = models.FloatField()
     perimeter = models.FloatField()
-    dwr_tiles_field = models.FloatField()
+    dwr_tiles_field = models.FloatField( db_column='dwr_tiles_', null=True, blank=True)
     dwr_tiles1 = models.FloatField()
-    poly_field = models.FloatField()
+    poly_field = models.FloatField(db_column="poly_", null=True, blank=True)
     subclass = models.CharField(max_length=13)
-    subclass_field = models.FloatField()
+    subclass_field = models.FloatField(db_column="subclass_", null=True, blank=True)
     tile = models.CharField(max_length=18)
     eastingll = models.IntegerField()
     northingll = models.IntegerField()
@@ -322,7 +324,7 @@ class OrthoTile(models.Model):
     block = models.FloatField()
     northindex = models.IntegerField()
     eastindex = models.IntegerField()
-    oid_field = models.IntegerField()
+    oid_field = models.IntegerField(db_column="oid_", null=True, blank=True)
     ortho_subm = models.CharField(max_length=254)
     geom = models.PolygonField(srid=50000,  db_column='the_geom') # Custom SRID for the DWR mappings
     objects = models.GeoManager()
@@ -370,8 +372,59 @@ orthotile_mapping = {
     'geom' : 'POLYGON',
 }
 
+class SimulationModel(models.Model):
+    name = models.CharField(max_length=255)
+    short_name = models.CharField(max_length=100)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+class ModelParameter(models.Model):
+    name = models.CharField(max_length=255)
+    short_name = models.CharField(max_length=100)
+    units = models.CharField(max_length=200)
+    description = models.TextField()
+    model = models.ForeignKey(SimulationModel)
+
+    def __str__(self):
+        return "%s (%s)" % (self.name, self.units)
+
 class Simulation(models.Model):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=200, blank=True, null=True, default="New Simulation")
     rivers = models.ManyToManyField(River)
     stations = models.ManyToManyField(Station)
+    model = models.ForeignKey(SimulationModel, blank=True, null=True)
+    bbox = models.PolygonField(srid=4326, null=True, blank=True)
+    region = models.PolygonField(srid=4326, null=True, blank=True)
+    description = models.TextField(blank=True)
+    start_point = models.PointField(srid=4326, null=True, blank=True)
+    end_point = models.PointField(srid=4326, null=True, blank=True)
+
+    def __str__(self):
+        if self.model:
+            model_name = self.model.name
+        else:
+            model_name = "No model"
+        return "Simulation #%d -- %s (%s)" % (self.id, self.name, model_name)
+
+class Run(models.Model):
+    simulation = models.ForeignKey(Simulation)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    results = models.TextField()
+
+    def __str__(self):
+        time_fmt = "%I:%M:%S @ %m/%d/%Y %p"
+        start_time = self.start_time.strftime(time_fmt)
+        end_time = self.end_time.strftime(time_fmt)
+        return "Run #%d Start: %s End: %s" % (self.id, start_time, end_time)
+
+class RunParameter(models.Model):
+    model_parameter = models.ForeignKey(ModelParameter)
+    value = models.FloatField()
+    run = models.ForeignKey(Run)
+
+    def __str__(self):
+        return "%f %s" % (self.value, self.model_parameter.units)

@@ -1,0 +1,98 @@
+
+{% if sensor.chart_data %}
+    <div class="chart_container">
+        <div id="chart-{{ sensor.id }}" class="mychart"></div>
+        <div id="slider-{{ sensor.id }}" class="slider"></div>
+        <div id="legend-{{ sensor.id }}" class="legend"></div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        var graph = new Rickshaw.Graph( {
+            renderer: 'line',
+            element: document.querySelector('#chart-{{ sensor.id }}'),
+            width: 720,
+            height: 200,
+            series: [
+                {
+                    name: "{{ sensor.type.name }}",
+                    color: 'black',
+                    data: {{ sensor.chart_data|safe }}
+                }
+            ]
+        } );
+
+        graph.render();
+
+        var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+            graph: graph
+        } );
+/*
+        var annotator = new Rickshaw.Graph.Annotate( {
+            graph: graph,
+            element: document.getElementById('timeline-{{ sensor.id }}')
+        } );*/
+
+        /*var smoother = new Rickshaw.Graph.Smoother( {
+            graph: graph,
+            element: $('#smoother-{{ sensor.id }}')
+        } );*/
+
+        var slider = new Rickshaw.Graph.RangeSlider( {
+            graph: graph,
+            element: $('#slider-{{ sensor.id }}')
+        } );
+
+        /*var legend = new Rickshaw.Graph.Legend( {
+         element: document.querySelector('#legend-{{ sensor.id }}'),
+         graph: graph
+         } );*/
+        var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
+
+        x_axis.render();
+
+        var y_axis = new Rickshaw.Graph.Axis.Y( {
+            graph: graph,
+            orientation: 'right',
+            //element: document.getElementById('y_axis-{{ sensor.id }}'),
+            tickFormat: function(y) { return result = y.toFixed(3); }
+        } );
+
+        y_axis.render();
+
+        graph.stackData.hooks.data.push( {
+            name: 'smoother',
+            orderPosition: 50,
+            f: function(data) {
+
+                var aggregatedData = [];
+
+                data.forEach( function(seriesData) {
+
+                    var aggregatedSeriesData = [];
+
+                    while (seriesData.length) {
+
+                        var avgX = 0, avgY = 0;
+                        var slice = seriesData.splice(0, 50);
+
+                        slice.forEach( function(d) {
+                            avgX += d.x / slice.length;
+                            avgY += d.y / slice.length;
+                        } );
+
+                        aggregatedSeriesData.push( { x: avgX, y: avgY } );
+                    }
+
+                    aggregatedData.push(aggregatedSeriesData);
+                } );
+
+                return aggregatedData;
+            }
+        } );
+
+    </script>
+{%  else %}
+    <h2>No data!</h2>
+{% endif %}

@@ -1,0 +1,14 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+    <div id="simulation">
+        <form action="{%  url create_simulation_run simulation_id=simulation.id %}" method="POST">
+            <h3>Run Parameters</h3>
+            {% for parameter in model_parameters %}
+                {{ parameter.name }} - {{ parameter.description }}
+            {% endfor  %}
+
+            <input type="submit" value="Create Run">
+        </form>
+    </div>
+{% endblock %}

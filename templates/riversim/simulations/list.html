@@ -2,5 +2,25 @@
 
 {% block content %}
     <div id="simulations">
+    {% if simulations %}
+        <ul>
+        {% for simulation in simulations %}
+            <li>
+                <a href="{% url show_simulation simulation_id=simulation.id %}">{{ simulation.name }}</a><br/>
+                <p>
+                <label>Model:</label> {{ simulation.model.name }}<br/>
+                <label>Rivers:</label> {{ simulation.river_names|title }}<br/>
+                <label>Stations:</label> {% for station in simulation.stations.all %}<a href="{% url show_station station_id=station.id %}">{{ station }}</a> {% endfor %}<br/>
+                <label>Description:</label> {{ simulation.description }}<br/>
+                <label>Aerial image:</label> <br/>
+                    <img src="{%  url simulation_aerial_image_thumbnail simulation_id=simulation.id thumbnail_width=500 %}"><br/>
+                    <a href="{%  url simulation_aerial_image_thumbnail simulation_id=simulation.id thumbnail_width=5000 %}" target="_blank">Open larger image</a>
+                </p>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>You are not logged in or you do not have any saved simulations.</p>
+    {% endif %}
     </div>
 {% endblock %}

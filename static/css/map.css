@@ -22,8 +22,8 @@
     position: relative;
     top:      0;
     right:    0;
-    height:   600px;
-    width:    900px;
+    height:   500px;
+    width:    720px;
     border:   1px solid black;
     float: left;
 }
@@ -41,4 +41,8 @@ select.riverselect {
 
 div.clear {
     clear: both;
+}
+
+#map_actions {
+
 }

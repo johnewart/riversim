@@ -175,3 +175,7 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.signals.SignalDebugPanel',
     'debug_toolbar.panels.logger.LoggingPanel',
 )
+
+#RIVER_TILES_PATH="/Volumes/Colossus/GIS/Tiles"
+#RIVER_TILES_PATH="/Volumes/Storage Tank/GIS/cvfed/Aerial_Imagery/HDR_LowerSanJoaquin/TIF"
+RIVER_TILES_PATH="/Volumes/Storage Tank/GIS/cvfed/Aerial_Imagery/RBF_UpperSanJoaquin/TIF"

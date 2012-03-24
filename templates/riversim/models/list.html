@@ -1,0 +1,21 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+    <div id="models">
+        {% if models %}
+            <ul>
+                {% for model in models %}
+                    <li>
+                        <a href="{% url show_model model_id=model.id %}">{{ model.name }}</a><br/>
+                        <p>
+                            <label>Short Name:</label> {{ model.short_name }}<br/>
+                            <label>Description:</label> {{ model.description }}<br/>
+                        </p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No models to list.</p>
+        {% endif %}
+    </div>
+{% endblock %}
