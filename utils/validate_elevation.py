@@ -2,11 +2,9 @@ from liblas import file as lasfile
 from liblas import vlr
 from liblas import header as lasheader
 from pyproj import * 
-from xml.dom.minidom import parseString
+from usgs import * 
 
-import httplib
 import random 
-
 import tile_grabber
 import psycopg2
 import sys
@@ -33,21 +31,12 @@ def elevation_by_sql(lon, lat):
         print "Unable to find a close match for %.12f, %.12f" % (lon, lat)
         return None
 
-def elevation_by_usgs(lon, lat):
-    url = "/xmlwebservices2/elevation_service.asmx/getElevation?X_Value=%(longitude).8f&Y_Value=%(latitude).8f&Elevation_Units=FEET&Source_Layer=NED.CONUS_NED&Elevation_Only=TRUE" % {"longitude": lon, "latitude": lat}
-    conn.request("GET", url)
-    xmldata = conn.getresponse().read()
-    dom = parseString(xmldata)
-    xmltag = dom.getElementsByTagName("double")[0].toxml()
-    usgs_elevation = float(xmltag.replace("<double>", "").replace("</double>", ""))
-    return usgs_elevation
 
 lidar_filename = '0712n0434e5k.las'
 f = lasfile.File(lidar_filename,None,'rb')
 h = f.header
 
 
-conn = httplib.HTTPConnection("gisdata.usgs.gov")
 
 # Projections for converting between the two
 #utmproj = Proj(init="epsg:26910")
