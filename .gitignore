@@ -1,1 +1,4 @@
 *.pyc
+aerial_cache
+cache
+.idea
