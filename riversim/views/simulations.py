@@ -16,9 +16,10 @@ from riversim.models import *
 from riversim.forms.simulations import EditSimulationForm
 from riversim.utils import closest_point, render_to_json
 
+
 import logging, traceback
 
-MAX_AERIAL_IMAGE_WIDTH=10000
+MAX_AERIAL_IMAGE_WIDTH=40000
 
 def create(request):
     if request.GET.get("polygon", None) != None:
@@ -68,7 +69,7 @@ def update(request, simulation_id):
                 if end_point_text:
                     end_point = GEOSGeometry('SRID=4326;POINT(%s)' % (end_point_text))
                     simulation.end_point = end_point
-                    
+
                 simulation.save()
                 return HttpResponse(status=200)
             except:
@@ -240,6 +241,20 @@ def new_run(request, simulation_id):
     return render_to_response('riversim/simulations/new_run.html', params, context_instance=RequestContext(request))
 
 def create_run(request, simulation_id):
+    simulation = Simulation.objects.get(pk=simulation_id)
+    model = simulation.model
+    run = Run.objects.create(simulation=simulation)
+
+    run_data = {
+        'simulation_id' : simulation.id,
+        'run_id': run.id
+    }
+    
+    # Make this mo' smarter...
+    if model.short_name == 'fourpt':
+        from riversim.adaptors import fourpt
+        fourpt.run(simulation, run)
+
     return HttpResponse(status=200)
 
 def closest_point_on_river(request):
