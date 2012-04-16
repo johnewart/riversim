@@ -333,7 +333,7 @@ class OrthoTile(models.Model):
     eastindex = models.IntegerField()
     oid_field = models.IntegerField(db_column="oid_", null=True, blank=True)
     ortho_subm = models.CharField(max_length=254)
-    geom = models.PolygonField(srid=50000,  db_column='the_geom') # Custom SRID for the DWR mappings
+    geom = models.MultiPolygonField(srid=50000,  db_column='the_geom') # Custom SRID for the DWR mappings
     objects = models.GeoManager()
 
 # Auto-generated `LayerMapping` dictionary for OrthoTile model
