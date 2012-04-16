@@ -161,6 +161,8 @@ LOGGING = {
     }
 }
 
+GEARMAN_SERVERS = ['127.0.0.1']
+
 # debug toolbar
 INTERNAL_IPS = ('127.0.0.1',)
 
