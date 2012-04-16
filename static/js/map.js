@@ -346,19 +346,25 @@ function selectSimulationPoint(where)
         $.get(RIVERSIM.urls.closest_point_on_river, data, function(result) {
             lonlat = new OpenLayers.LonLat(result.longitude, result.latitude).transform(request_projection, view_projection);
             var update_data = {};
-
+			var icon = null; 
+            var flagsize = new OpenLayers.Size(27,36);
+            var flagoffset = new OpenLayers.Pixel(-(flagsize.w/2), -flagsize.h);
+			
             if(where == 'start')
-            {
+            { 
+                
+				icon = new OpenLayers.Icon('/static/images/markers/flag_green.png', flagsize, flagoffset);
                 update_data['start_point'] = result.longitude + " " + result.latitude
             }
 
             if (where == 'end')
             {
+				icon = new OpenLayers.Icon('/static/images/markers/flag_red.png', flagsize, flagoffset);
                 update_data['end_point'] = result.longitude + " " + result.latitude
             }
 
             $.get("update", update_data, function(result) {
-                var marker = new OpenLayers.Marker(lonlat) ;
+                var marker = new OpenLayers.Marker(lonlat, icon) ;
                 markers.addMarker(marker);
             });
 
@@ -367,9 +373,7 @@ function selectSimulationPoint(where)
             //marker.moveTo(opx) ;
 
             /*
-             var size = new OpenLayers.Size(21,25);
-             var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
-             var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
+             
              markers.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(0,0),icon));
              markers.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(0,0),icon.clone()));
              */
