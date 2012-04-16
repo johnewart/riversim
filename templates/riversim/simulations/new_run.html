@@ -3,6 +3,7 @@
 {% block content %}
     <div id="simulation">
         <form action="{%  url create_simulation_run simulation_id=simulation.id %}" method="POST">
+        		{% csrf_token %}
             <h3>Run Parameters</h3>
             {% for parameter in model_parameters %}
                 {{ parameter.name }} - {{ parameter.description }}
