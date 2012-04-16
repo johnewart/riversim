@@ -1,0 +1,26 @@
+rect {
+    fill: #fff;
+}
+
+div.chart {
+    background-color: #F7F2C5;
+    width: 720px !important;
+    height:400px;
+}
+
+circle, .line {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+}
+
+circle {
+    fill: #fff;
+    fill-opacity: .2;
+    cursor: move;
+}
+
+circle.selected {
+    fill: #ff7f0e;
+    stroke: #ff7f0e;
+}
