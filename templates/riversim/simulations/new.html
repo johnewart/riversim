@@ -3,6 +3,7 @@
 {% block content %}
     <div id="simulation">
         <form action="{%  url create_simulation %}" method="POST">
+            {% csrf_token %}
             <input type="text" name="simulation['name']">
             <select name="simulation['rivers']" multiple>
                 {% for entry in river_names %}
