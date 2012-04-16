@@ -1,11 +1,12 @@
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
+from time import mktime
+from flumen.utils import cdec
 
 import datetime 
-from time import mktime
+import json
 
-from flumen.utils import cdec
 
 class DataSource(models.Model):
     name = models.CharField(max_length = 255)
@@ -166,6 +167,12 @@ class River(models.Model):
 
     def __str__(self):
         return self.name
+
+    def to_dict(self):
+        attributes = {
+            'name': self.name
+        }
+        return attributes
     
 # Auto-generated `LayerMapping` dictionary for River model
 river_mapping = {
@@ -380,6 +387,14 @@ class SimulationModel(models.Model):
     def __str__(self):
         return self.name
 
+    def to_dict(self):
+        attributes = {
+            'name': self.name, 
+            'short_name': self.short_name, 
+            'description': self.description
+        }
+        return attributes
+
 class ModelParameter(models.Model):
     name = models.CharField(max_length=255)
     short_name = models.CharField(max_length=100)
@@ -409,11 +424,29 @@ class Simulation(models.Model):
             model_name = "No model"
         return "Simulation #%d -- %s (%s)" % (self.id, self.name, model_name)
 
+    def to_dict(self):
+        attributes = {
+            'name': self.name,
+            'rivers' : [ r.to_dict() for r in self.rivers.all() ],
+            'model': self.model.to_dict(),
+            'extent': self.region.extent,
+            'description': self.description,
+            'start_point' : {
+                'longitude': self.start_point.x, 
+                'latitude': self.start_point.y
+            },
+            'end_point' : {
+                'longitude': self.end_point.x, 
+                'latitude': self.end_point.y
+            } 
+        }
+        return attributes
+
 class Run(models.Model):
     simulation = models.ForeignKey(Simulation)
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    results = models.TextField()
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    results = models.TextField(null=True, blank=True)
 
     def __str__(self):
         time_fmt = "%I:%M:%S @ %m/%d/%Y %p"
