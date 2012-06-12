@@ -47,8 +47,13 @@
 
     <div id="simulation">
         <h1><a href="{%  url edit_simulation simulation_id=simulation.id %}">{{ simulation.name }}</a></h1>
-        <h2>Region</h2>
-        {{ simulation.region.extent }}
+        <h2>Simulation Data</h2>
+        <ul>
+            <li>Extent: {{ simulation.region.extent }}</li>
+            <li>Start Elevation: {{ simulation.start_elevation }} ft.</li>
+            <li>End Elevation: {{ simulation.end_elevation }} ft.</li>
+            <li>Elevation Change: {{ simulation.elevation_change }} ft.</li>
+        </ul>
 
         <h2>Rivers</h2>
         <ul>
@@ -67,7 +72,7 @@
         <h2>Runs</h2>
         <a href="{% url new_simulation_run simulation_id=simulation.id %}">Create New</a>
         <ul>
-            {% for run in simulation.runs.all %}
+            {% for run in simulation.run_set.all %}
                 <li>{{ run }}</li>
             {% endfor  %}
         </ul>

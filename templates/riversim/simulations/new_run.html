@@ -3,10 +3,14 @@
 {% block content %}
     <div id="simulation">
         <form action="{%  url create_simulation_run simulation_id=simulation.id %}" method="POST">
-        		{% csrf_token %}
+        	{% csrf_token %}
             <h3>Run Parameters</h3>
+
             {% for parameter in model_parameters %}
-                {{ parameter.name }} - {{ parameter.description }}
+            <p>
+            <label>{{ parameter.description }}</label>
+            <input type="text" name="model_params_{{ parameter.short_name }}">
+            </p>
             {% endfor  %}
 
             <input type="submit" value="Create Run">

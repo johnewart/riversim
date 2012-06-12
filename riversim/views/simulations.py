@@ -290,19 +290,29 @@ def new_run(request, simulation_id):
 def create_run(request, simulation_id):
     simulation = Simulation.objects.get(pk=simulation_id)
     model = simulation.model
+
     run = Run.objects.create(simulation=simulation)
 
-    run_data = {
+    for param in request.POST:
+        result = re.match(r'model_params_(\w+)', param)
+        if result:
+            short_name = result.groups()[0]
+            value = float(request.POST.get(param))
+            model_param = ModelParameter.objects.get(model = model, short_name = short_name)
+            run_param = RunParameter.create(value = value, run = run, model_parameter = model_param)
+
+    params = {
         'simulation_id' : simulation.id,
         'run_id': run.id
     }
     
-    # Make this mo' smarter...
+    # TODO: Make this mo' smarter...
     if model.short_name == 'fourpt':
         from riversim.adaptors import fourpt
         fourpt.run(simulation, run)
 
-    return HttpResponse(status=200)
+    redirect_url = reverse("show_run", kwargs={"run_id": run.id})
+    return HttpResponseRedirect(redirect_url)
 
 def closest_point_on_river(request):
     longitude = float(request.GET.get("longitude", None))

@@ -15,7 +15,11 @@ class SimulationModelAdmin(admin.ModelAdmin):
 class ModelParameterAdmin(admin.ModelAdmin):
     pass
 
+class RunAdmin(admin.ModelAdmin):
+    pass
+
 admin.site.register(River, RiverAdmin)
 admin.site.register(Simulation, SimulationAdmin)
 admin.site.register(SimulationModel, SimulationModelAdmin)
 admin.site.register(ModelParameter, ModelParameterAdmin)
+admin.site.register(Run, RunAdmin)

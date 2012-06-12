@@ -416,6 +416,16 @@ class Simulation(models.Model):
     description = models.TextField(blank=True)
     start_point = models.PointField(srid=4326, null=True, blank=True)
     end_point = models.PointField(srid=4326, null=True, blank=True)
+    start_elevation = models.FloatField(default=-1.0)
+    end_elevation = models.FloatField(default=-1.0)
+
+    def _elevation_change(self):
+        try:
+            return self.start_elevation - self.end_elevation
+        except:
+            return -1
+
+    elevation_change = property(_elevation_change)
 
     def __str__(self):
         if self.model:
@@ -450,8 +460,16 @@ class Run(models.Model):
 
     def __str__(self):
         time_fmt = "%I:%M:%S @ %m/%d/%Y %p"
-        start_time = self.start_time.strftime(time_fmt)
-        end_time = self.end_time.strftime(time_fmt)
+        try:
+            start_time = self.start_time.strftime(time_fmt)
+        except: 
+            start_time = "N/A"
+
+        try:
+            end_time = self.end_time.strftime(time_fmt)
+        except: 
+            end_time = 'N/A'
+
         return "Run #%d Start: %s End: %s" % (self.id, start_time, end_time)
 
 class RunParameter(models.Model):

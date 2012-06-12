@@ -4,9 +4,12 @@ import glob
 import logging
 import Image
 import ImageFont, ImageDraw, ImageOps
-from riversim.utils import log_traceback
 
-tile_size = 120
+import numpy
+import osr
+import gdal
+
+from riversim.utils import log_traceback
 
 def stitch_tiles(tile_files, image_width=None):
     min_north = None
