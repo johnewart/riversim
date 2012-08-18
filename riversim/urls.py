@@ -14,11 +14,15 @@ urlpatterns = patterns('riversim',
     url(r'simulations/create/?$', 'views.simulations.create', name='create_simulation'),
     url(r'simulations/new/?$', 'views.simulations.new', name='new_simulation'),
     url(r'simulations/(?P<simulation_id>\d+)/update/?$', 'views.simulations.update', name='update_simulation'),
-    url(r'simulations/(?P<simulation_id>\d+)/?$', 'views.simulations.show', name='show_simulation'),
+    url(r'simulations/(?P<simulation_id>\d+)/$', 'views.simulations.show', name='show_simulation'),
     url(r'simulations/(?P<simulation_id>\d+)/edit$', 'views.simulations.edit', name='edit_simulation'),
     url(r'simulations/(?P<simulation_id>\d+)/aerial/(?P<thumbnail_width>\d+)', 'views.simulations.aerial_image_thumbnail', name='simulation_aerial_image_thumbnail'),
     url(r'simulations/(?P<simulation_id>\d+)/aerial/?', 'views.simulations.aerial_image', name='simulation_aerial_image'),
-
+    url(r'simulations/(?P<simulation_id>\d+)/channels/(?P<thumbnail_width>\d+)', 'views.simulations.channel_image_thumbnail', name='simulation_channel_image_thumbnail'),
+    url(r'simulations/(?P<simulation_id>\d+)/channels/?', 'views.simulations.channel_image', name='simulation_channel_image'),
+    url(r'simulations/(?P<simulation_id>\d+)/channel_width/(?P<thumbnail_width>\d+)', 'views.simulations.channel_width_image_thumbnail', name='simulation_channel_width_image_thumbnail'),
+    url(r'simulations/(?P<simulation_id>\d+)/channel_width/?', 'views.simulations.channel_width_image', name='simulation_channel_width_image'),
+    
     # Simulation runs
     url(r'simulations/(?P<simulation_id>\d+)/runs/(?P<simulation_run_id>\d+)/?$', 'views.simulations.show_run', name='show_simulation_run'),
     url(r'simulations/(?P<simulation_id>\d+)/runs/new/?$', 'views.simulations.new_run', name='new_simulation_run'),
@@ -35,5 +39,8 @@ urlpatterns = patterns('riversim',
     url(r'rivers/filter?$', 'views.rivers.filter_rivers', name='filter_rivers'),
     url(r'rivers/select/?$', 'views.rivers.select_rivers', name='select_rivers'),
     url(r'stations/sensor_names', 'views.stations.station_sensors', name='station_sensors'),
-    url(r'simulations/closest_point_on_river/?', 'views.simulations.closest_point_on_river', name='closest_point_on_river')
+    url(r'simulations/closest_point_on_river/?', 'views.simulations.closest_point_on_river', name='closest_point_on_river'),
+
+    # WMS
+    url(r'wms/?$', 'views.public.wms', name='wms'),
 )

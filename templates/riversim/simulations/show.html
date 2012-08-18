@@ -1,6 +1,8 @@
 {% extends "base_layout.html" %}
 
 {% block content %}
+    
+    <script type="text/javascript" src="/static/js/loupe.js"></script>
     <script type="text/javascript">
         {% if simulation %}
             zoomExtent = new OpenLayers.Bounds{{  simulation.region.extent }};
@@ -9,13 +11,32 @@
         {% endif %}
 
         $(document).ready(function() {
-            riversimInit(zoomExtent);
+						var map = new OpenLayers.Map('map', { numZoomLevels: 22 } );
+						var aerial_layer = new OpenLayers.Layer.WMS( "aerial", 
+							                    "/riversim/wms",
+																	{layers: '26_aerial', format: 'image/png' },
+																	{projection: new OpenLayers.Projection('EPSG:4326')}
+						);
+						map.addLayer(aerial_layer);
+						map.setLayerIndex(aerial_layer, 10);
+
+						var channel_layer = new OpenLayers.Layer.WMS("Channel Layer",
+							"/riversim/wms", 
+							{ layers: "26_channels", format: "image/png" , transparent: 'true'}, 
+							{ projection: new OpenLayers.Projection('EPSG:4326'),
+							isBaseLayer: false, opacity: 0.3});
+
+						map.addLayer(channel_layer);
+						map.setLayerIndex(channel_layer, 50);
+
+						map.setCenter(new OpenLayers.LonLat(-120.7066438,  37.4183875), 14);
+						map.addControl( new OpenLayers.Control.LayerSwitcher() );
 
             {% if simulation.start_point %}
             var flagsize = new OpenLayers.Size(27,36);
             var flagoffset = new OpenLayers.Pixel(-(flagsize.w/2), -flagsize.h);
-			var icon = new OpenLayers.Icon('/static/images/markers/flag_green.png', flagsize, flagoffset); 
-			
+						var icon = new OpenLayers.Icon('/static/images/markers/flag_green.png', flagsize, flagoffset); 
+      
             var start_point = new OpenLayers.LonLat({{ simulation.start_point.x }}, {{ simulation.start_point.y }});
                 start_point = start_point.transform(request_projection, view_projection);
             var start_marker = new OpenLayers.Marker(start_point, icon);
@@ -25,8 +46,8 @@
             {% if simulation.end_point %}
             var flagsize = new OpenLayers.Size(27,36);
             var flagoffset = new OpenLayers.Pixel(-(flagsize.w/2), -flagsize.h);
-			var icon = new OpenLayers.Icon('/static/images/markers/flag_red.png', flagsize, flagoffset); 
-			
+      var icon = new OpenLayers.Icon('/static/images/markers/flag_red.png', flagsize, flagoffset); 
+      
             var end_point = new OpenLayers.LonLat({{ simulation.end_point.x }}, {{ simulation.end_point.y }});
                 end_point = end_point.transform(request_projection, view_projection);
             var end_marker = new OpenLayers.Marker(end_point, icon);
@@ -70,11 +91,80 @@
         </div>
 
         <h2>Runs</h2>
-        <a href="{% url new_simulation_run simulation_id=simulation.id %}">Create New</a>
+        <a href="{% url new_simulation_run simulation_id=simulation.id %}">Create New Run</a>
         <ul>
             {% for run in simulation.run_set.all %}
                 <li>{{ run }}</li>
             {% endfor  %}
         </ul>
     </div>
+
+    <h2>Imagery</h2>
+    <div class="imagery">
+      <!-- <img id="aerial_image" width="800" src="{%  url
+			simulation_aerial_image_thumbnail simulation_id=simulation.id
+			thumbnail_width=960 %}"> -->
+      <div>
+        <!-- <img id='channel_image' width="800" src="{%  url
+				simulation_channel_image_thumbnail simulation_id=simulation.id
+				thumbnail_width=1280 %}"
+				onload="loupe.add(this,{visible:true,crosshair:true,xview:400,yview:364,opacity:100,name:'channel_loupe',resopath:'/static/images/loupe/',color:'#ff0000'});">
+				-->
+      </div>
+        <script type="text/javascript">
+          /*$('#channel_image').click(function(event){
+            var x = event.pageX - this.offsetLeft;
+            var y = event.pageY - this.offsetTop;
+            alert('X: '+x+'  Y:'+y);
+          });*/
+
+					$("#channel_image").click(function(event) {
+							channel_loupe = loupe.G('channel_loupe');
+							channel_image = $('#channel_image')[0];
+							// Center of loupe offsets
+							xoff = channel_loupe.xOff + channel_loupe.halfw; 
+							yoff = channel_loupe.yOff + channel_loupe.halfh; 
+							// Center of loupe on image
+							centerX = channel_image.offsetLeft + channel_loupe.offsetLeft + xoff; 
+							centerY = channel_image.offsetTop + channel_loupe.offsetTop + yoff;
+							// Scale to natural size (non-scaled)
+							actualY = Math.floor((centerY / channel_image.height) * channel_image.naturalHeight); 
+							actualX = Math.floor((centerX / channel_image.width) * channel_image.naturalWidth); 
+							alert("Pixel x: " + actualX + " y: " + actualY);
+							var width_args = {
+									'actualX': actualX, 
+									'actualY': actualY, 
+									'naturalWidth': channel_image.naturalWidth,
+									'naturalHeight': channel_image.naturalHeight
+							};
+							$.ajax({
+								url: "{% url simulation_channel_width_image simulation_id=simulation.id %}", 
+								dataType: 'json',
+								data: width_args,
+								success: function(data){
+										console.log(data);
+											if (data["channel_width_image"])
+											{
+													$("#channel_width_image").html(
+															"<img src='" + data["channel_width_image"] + "'>"
+													);
+											} else { 
+													$("#channel_width_image").html(
+															"Currently " + data['percentage_complete'] + "% done..."
+													);
+											}
+								}
+							});
+
+					});
+        </script>
+    </div>
+
+    <h2>Tiles</h2>
+    <ul>
+    {% for tile in simulation.ortho_tiles.all %}
+    <li>{{ tile.tile }}</li>
+    {% endfor %}
+    </ul>  
+
 {% endblock %}

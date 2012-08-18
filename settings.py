@@ -64,7 +64,7 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = ''
+STATIC_ROOT = "" #os.path.join(BASE_DIR, 'static')
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -131,7 +131,8 @@ INSTALLED_APPS = (
     'django_extensions',
     'riversim',
     'debug_toolbar',
-    'south'
+    'south',
+    'gunicorn'
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -150,13 +151,22 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler'
-        }
+        }, 
+        'null': {
+            'level': 'DEBUG',
+            'class':'django.utils.log.NullHandler',
+         },
     },
     'loggers': {
         'django.request': {
-            'handlers': ['mail_admins'],
+            'handlers': ['null'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'django.db.backends': {
+            'handlers': ['null'],  # Quiet by default!
+            'propagate': False,
+            'level':'DEBUG',
         },
     }
 }
@@ -180,4 +190,32 @@ DEBUG_TOOLBAR_PANELS = (
 
 #RIVER_TILES_PATH="/Volumes/Colossus/GIS/Tiles"
 #RIVER_TILES_PATH="/Volumes/Storage Tank/GIS/cvfed/Aerial_Imagery/HDR_LowerSanJoaquin/TIF"
-RIVER_TILES_PATH="/Volumes/Storage Tank/GIS/cvfed/Aerial_Imagery/RBF_UpperSanJoaquin/TIF"
+DATA_ROOT="/riversim"
+RIVER_TILES_PATH="/riversim/imagery/TIF"
+THUMBNAIL_PATH=os.path.join(DATA_ROOT, "thumbnails")
+TILE_CACHE_PATH=os.path.join(DATA_ROOT, "tile_cache")
+GEOTIFF_PATH="%s/geotiff" % (DATA_ROOT)
+CHANNEL_PATH="%s/channels" % (DATA_ROOT)
+CHANNEL_WIDTH_PATH="%s/channel_widths" % DATA_ROOT
+MAX_AERIAL_IMAGE_WIDTH=20000
+
+TILECACHE_CACHE=os.path.join(DATA_ROOT, "wms_tiles")
+
+
+# Tilecache
+from TileCache import Service
+from TileCache.Layers import GDAL
+from TileCache.Caches.Disk import Disk
+
+
+diskCache = Disk(TILECACHE_CACHE)
+mapLayers = {
+    '26_aerial': GDAL.GDAL("26_aerial", "/riversim/geotiff/26.tiff"),
+    '26_channels': GDAL.GDAL("26_channels", "/riversim/channels/26geo.tiff")
+}
+
+MAP_SERVICE = Service(diskCache, mapLayers)
+
+
+
+

@@ -16,14 +16,16 @@ from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.db.models import Q
 from django.conf import settings
 
+from utils.usgs import *
+
 from riversim.models import *
 from riversim.forms.simulations import EditSimulationForm
 from riversim.utils import closest_point, render_to_json
 
+from gearman import GearmanClient
 
 import logging, traceback
 
-MAX_AERIAL_IMAGE_WIDTH=20000
 
 def create(request):
     if request.GET.get("polygon", None) != None:
@@ -69,10 +71,13 @@ def update(request, simulation_id):
                 if start_point_text:
                     start_point = GEOSGeometry('SRID=4326;POINT(%s)' % (start_point_text))
                     simulation.start_point = start_point
+                    simulation.start_elevation = usgs_elevation(start_point.x, start_point.y)
+
 
                 if end_point_text:
                     end_point = GEOSGeometry('SRID=4326;POINT(%s)' % (end_point_text))
                     simulation.end_point = end_point
+                    simulation.end_elevation = usgs_elevation(end_point.x, end_point.y)
 
                 simulation.save()
                 return HttpResponse(status=200)
@@ -152,126 +157,102 @@ def show(request, simulation_id):
 
     return render_to_response('riversim/simulations/show.html', params, context_instance=RequestContext(request))
 
+def thumbnail(request, simulation, image_type, thumbnail_width):
+    thumbnail_width = int(thumbnail_width)
+
+    if (thumbnail_width > settings.MAX_AERIAL_IMAGE_WIDTH):
+        thumbnail_width = settings.MAX_AERIAL_IMAGE_WIDTH
+
+    logging.debug("Thumbnail width: %s px" % (thumbnail_width))
+
+    thumbfile = simulation.thumbnail_path(image_type, thumbnail_width)
+    fullsizefile = simulation.thumbnail_path(image_type, settings.MAX_AERIAL_IMAGE_WIDTH)
+    
+    thumbdir = os.path.dirname(thumbfile)
+
+    if(not os.path.exists(thumbdir)):
+        os.makedirs(thumbdir)
+    
+    thumb_img = None
+
+    if os.path.isfile(thumbfile):
+        thumb_img = Image.open(thumbfile)
+        sys.stdout.write("Loading cached thumbnail file: " + thumbfile + "\n")
+    else:
+        logging.debug("Full size image: %s" % (fullsizefile))
+        # If we have a full-sized cached image, use that rather than re-building the image
+        if os.path.isfile(fullsizefile):
+            logging.debug("Resizing %s to %d px in width" % (fullsizefile, thumbnail_width))
+            img = Image.open(fullsizefile)
+        else:
+            img = simulation.generate_image(image_type)            
+            imgdir = os.path.dirname(fullsizefile)
+            if (not os.path.exists(imgdir)):
+                os.makedirs(imgdir)
+            img.save(fullsizefile, 'PNG')
+
+        # Cache image
+        aspect = float(img.size[0]) / float(img.size[1]) #calculate width/height
+        thumb_img = img.resize( (thumbnail_width, int(thumbnail_width / aspect)), Image.BICUBIC)
+        thumb_img.save(thumbfile, 'PNG')
+
+    response = HttpResponse(mimetype='image/png')
+    thumb_img.save(response, 'PNG')
+    return response
+
+
+def channel_image(request, simulation_id): 
+    return channel_image_thumbnail(request, simulation_id, settings.MAX_AERIAL_IMAGE_WIDTH)
+
+def channel_image_thumbnail(request, simulation_id, thumbnail_width):
+    simulation = Simulation.objects.get(pk=simulation_id)
+    return thumbnail(request, simulation, "channel", thumbnail_width)
+
 def aerial_image(request, simulation_id):
-    return aerial_image_thumbnail(request, simulation_id, MAX_AERIAL_IMAGE_WIDTH)
+    return aerial_image_thumbnail(request, simulation_id, settings.MAX_AERIAL_IMAGE_WIDTH)
 
 def aerial_image_thumbnail(request, simulation_id, thumbnail_width):
-    logging.debug("Aerial thumbnail width: %s px" % (thumbnail_width))
-    try:
-        imagename = "%s.png" % (simulation_id)
-        thumbnail_width = int(thumbnail_width)
+    simulation = Simulation.objects.get(pk=simulation_id)
+    return thumbnail(request, simulation, "aerial", thumbnail_width)
 
-        if (thumbnail_width > MAX_AERIAL_IMAGE_WIDTH):
-            thumbnail_width=MAX_AERIAL_IMAGE_WIDTH
+def channel_width_image(request, simulation_id):
+    return channel_width_image_thumbnail(request, simulation_id, settings.MAX_AERIAL_IMAGE_WIDTH)
 
-        logging.debug("Aerial thumbnail width: %s px" % (thumbnail_width))
+def channel_width_image_thumbnail(request, simulation_id, thumbnail_width): 
+    simulation = Simulation.objects.get(pk = simulation_id)
+    response_image = None
 
-        #Before resizing, check to see if there's a cached image
-        width_path = str(thumbnail_width)
-        thumbfile = os.path.join(settings.MEDIA_ROOT, "aerial_cache", width_path, imagename)
-        thumbdir = os.path.dirname(thumbfile)
+    if simulation.channel_width_job_complete:
+        response_image = thumbnail(request, simulation, 'width', thumbnail_width)
+    else:
+        if not simulation.channel_width_job_handle:
+            actual_x = int(request.GET.get('actualX'))
+            actual_y = int(request.GET.get('actualY'))
+            natural_width = int(request.GET.get('naturalWidth'))
+            natural_height = int(request.GET.get('naturalHeight'))
+            start_x = (actual_x / natural_width) * simulation.aerialmap_width
+            start_y = (actual_y / natural_height) * simulation.aerialmap_height
 
-        if(not os.path.exists(thumbdir)):
-            os.makedirs(thumbdir)
+            simulation.channel_width_x_origin = start_x
+            simulation.channel_width_y_origin = start_y
+            simulation.save()
 
-        if os.path.isfile(thumbfile):
-            aerial_img = Image.open(thumbfile)
-            sys.stdout.write("Loading from thumbnail file: " + thumbfile + "\n")
-        else:
-            fullsizefile = os.path.join(settings.MEDIA_ROOT, "aerial_cache", str(MAX_AERIAL_IMAGE_WIDTH), imagename)
-            logging.debug("Full size image: %s" % (fullsizefile))
-            # If we have a full-sized cached image, use that rather than re-building the image
-            if os.path.isfile(fullsizefile):
-                logging.debug("Resizing %s to %d px in width" % (fullsizefile, thumbnail_width))
-                img = Image.open(fullsizefile)
-                aspect = float(img.size[0]) / float(img.size[1]) #calculate width/height
-                aerial_img = img.resize( (thumbnail_width, int(thumbnail_width / aspect)), Image.BICUBIC)
-            else:
-                tile_path = settings.RIVER_TILES_PATH
+            simulation.generate_image('width')
 
-                simulation = Simulation.objects.get(pk = simulation_id)
-                rivers = simulation.rivers.all()
-
-                tileQ = Q()
-                #tiles = []
-                for river in rivers:
-                    thegeom = river.geom.buffer(0.01)
-                    tileQ |= Q(geom__intersects=thegeom)
-                    #river_tiles = OrthoTile.objects.filter(geom__dwithin=(river.geom, 0.02))
-                    #tiles.extend(river_tiles)
-                    #stations = CDECStation.objects.filter(geom__dwithin=(river.geom, 0.02))
-
-                tiles = OrthoTile.objects.filter(tileQ).filter(geom__bboverlaps=simulation.region)
-
-                img_tiles = []
-                for tile in tiles:
-                    imgfile = "%s/%s.tif" % (tile_path, tile.tile)
-                    logging.debug("Tile: %s" % (tile.tile))
-                    img_tiles.append(imgfile)
-
-                from utils.image_stitcher import stitch_tiles
-                logging.debug("Generating aerial image with width: %d" % (MAX_AERIAL_IMAGE_WIDTH))
-                img = stitch_tiles(img_tiles, MAX_AERIAL_IMAGE_WIDTH)
-                img.save(fullsizefile, 'PNG')
-
-                print "Saved original image, writing GeoTIFF"
-                # Also save full size image as GeoTIFF
-                image_extent = tiles.extent()
-                print "Extent: %s" % (str(image_extent))
-                topleft = Point(image_extent[0], image_extent[3], srid=tiles[0].geom.srid)
-                bottomright = Point(image_extent[2], image_extent[1], srid=tiles[0].geom.srid)
-                topleft.transform(4326)
-                bottomright.transform(4326)
-
-                res_x = abs(bottomright.x - topleft.x) / img.size[0]
-                res_y = abs(topleft.y - bottomright.y) / img.size[1]
-
-                geotiff_file = os.path.join(settings.MEDIA_ROOT, "tile_cache", "%s.tiff" % (simulation_id))
-                geotiff_dir = os.path.dirname(geotiff_file)
-                if(not os.path.exists(geotiff_dir)):
-                    os.makedirs(geotiff_dir)
-                print "GeoTIFF File: %s" % (geotiff_file)
-
-                pixels = numpy.array(img)
-                driver = gdal.GetDriverByName("GTiff")
-                geotiff_full_path = os.path.join(settings.BASE_DIR, geotiff_file)
-                dst_ds = driver.Create(str(geotiff_full_path), img.size[0], img.size[1], 3, gdal.GDT_Byte)
-                # SetGeoTransform [ topleft_x, pixel_width, rotation, topleft_y, rotation, pixel_height]
-                dst_ds.SetGeoTransform( [ topleft.x, res_x, 0, topleft.y, 0, -res_y] )
-
-                srs = osr.SpatialReference()
-                srs.SetWellKnownGeogCS("WGS84")
-                dst_ds.SetProjection( srs.ExportToWkt() )
-
-                print "Writing GeoTIFF file..."
-                # write the band
-                print "Channel 1 (Red)..."
-                dst_ds.GetRasterBand(1).WriteArray(pixels[:,:,0])
-                print "Channel 2 (Green)..."
-                dst_ds.GetRasterBand(2).WriteArray(pixels[:,:,1])
-                print "Channel 3 (Blue)..."
-                dst_ds.GetRasterBand(3).WriteArray(pixels[:,:,2])
-                #print "Channel 4 (Alpha)..."
-                #dst_ds.GetRasterBand(4).WriteArray(pixels[:,:,3])
-
-
-                print "Resizing..."
-                aspect = float(img.size[0]) / float(img.size[1]) #calculate width/height
-                aerial_img = img.resize( (thumbnail_width, int(thumbnail_width / aspect)), Image.BICUBIC)
-
-
-            # Cache image
-            aerial_img.save(thumbfile, 'PNG')
-
-        response = HttpResponse(mimetype='image/png')
-        aerial_img.save(response, 'PNG')
-        return response
-
-
-    except:
-        logging.debug("Unable to find matching ortho tiles...")
-        raise
-        return HttpResponse(status=500)
+    
+    if request.is_ajax(): 
+        if response_image:
+            response_data = {
+                'channel_width_image' : request.path
+            }
+        else: 
+            response_data = {
+                'percent_complete' : simulation.get_channel_width_status()
+            }
+        json_data = json.dumps(response_data)
+        return HttpResponse(json_data, mimetype="application/json")
+    else:
+        return thumbnail(request, simulation, "width", thumbnail_width)
 
 def show_run(request, simulation_id, simulation_run_id):
     return HttpResponse(status=200)

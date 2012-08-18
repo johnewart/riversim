@@ -11,7 +11,6 @@ from django.contrib.gis.geos import Polygon
 from django.db.models import Q
 
 from riversim.models import *
-from riversim.forms.runs import EditSimulationForm
 
 import logging, traceback
 

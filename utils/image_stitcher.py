@@ -39,8 +39,8 @@ def stitch_tiles(tile_files, image_width=None):
 
         logging.debug("East: %d - %d North: %d - %d" % (min_east, max_east, min_north, max_north))
 
-        num_tiles_x = (max_east - min_east)
-        num_tiles_y = (max_north - min_north)
+        num_tiles_x = (max_east - min_east) + 1
+        num_tiles_y = (max_north - min_north) + 1
         logging.debug("Tiles %d x %d" % (num_tiles_x, num_tiles_y))
 
         # Resize if needed
@@ -68,7 +68,7 @@ def stitch_tiles(tile_files, image_width=None):
             north = int(m.group(1))
 
             x = ((east - min_east)) * tile_width
-            y = height - ((north - min_north) * tile_height)
+            y = height - (((north - min_north) + 1) * tile_height)
 
             try:
                 temp_image = Image.open(tile_file)

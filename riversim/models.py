@@ -1,12 +1,18 @@
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.db.models import Q
+
 from time import mktime
+
 from flumen.utils import cdec
 
 import datetime 
 import json
+import os
 
+from gearman import GearmanClient
 
 class DataSource(models.Model):
     name = models.CharField(max_length = 255)
@@ -418,6 +424,61 @@ class Simulation(models.Model):
     end_point = models.PointField(srid=4326, null=True, blank=True)
     start_elevation = models.FloatField(default=-1.0)
     end_elevation = models.FloatField(default=-1.0)
+    channel_width_job_complete = models.BooleanField(default=False)
+    channel_width_job_handle = models.CharField(max_length = 255, blank=True, null=True)
+    channel_width_x_origin = models.IntegerField(blank=True, null=True)
+    channel_width_y_origin = models.IntegerField(blank=True, null=True)
+    aerialmap_width = models.IntegerField(blank=True, null=True)
+    aerialmap_height = models.IntegerField(blank=True, null=True)
+
+
+    def get_ortho_tiles(self):
+        rivers = self.rivers.all()
+
+        tileQ = Q()
+        #tiles = []
+        for river in rivers:
+            thegeom = river.geom.buffer(0.01)
+            tileQ |= Q(geom__intersects=thegeom)
+            #river_tiles = OrthoTile.objects.filter(geom__dwithin=(river.geom, 0.02))
+            #tiles.extend(river_tiles)
+            #stations = CDECStation.objects.filter(geom__dwithin=(river.geom, 0.02))
+
+        tiles = OrthoTile.objects.filter(tileQ).filter(geom__bboverlaps=self.region)
+        
+        return tiles 
+
+    ortho_tiles = property(get_ortho_tiles)
+
+    def generate_image(self, image_type):
+        from riversim.imagery import channel_tiles, aerial_tiles, channel_width
+
+        if image_type == "aerial":
+            img = aerial_tiles.generate(self.id)
+        elif image_type == "channel":
+            img = channel_tiles.generate(self.id)
+        elif image_type == "width":
+            img = channel_width.generate(self.id)
+
+        return img
+
+    def thumbnail_path(self, image_type, width):
+        return os.path.join(settings.THUMBNAIL_PATH, "%s_cache" % (image_type), str(width), "%s.png" % (self.id))
+
+    def _aerial_geotiff(self):
+        return os.path.join(settings.GEOTIFF_PATH, "%s.tiff" % (self.id))
+
+    aerial_geotiff = property(_aerial_geotiff)
+
+    def _channel_image(self):
+        return os.path.join(settings.CHANNEL_PATH, "%s.tiff" % (self.id))
+
+    channel_image = property(_channel_image)
+
+    def _channel_width_image(self):
+        return os.path.join(settings.CHANNEL_WIDTH_PATH, "%s.tiff" % (self.id))
+
+    channel_width_image = property(_channel_width_image)
 
     def _elevation_change(self):
         try:
@@ -451,6 +512,34 @@ class Simulation(models.Model):
             } 
         }
         return attributes
+
+    def get_channel_width_status(self):
+        if self.channel_width_job_complete:
+            return 100
+        else:
+            if os.path.isfile(self.channel_width_image):
+                self.channel_width_job_complete = True
+                self.save()
+                return 100
+            else:
+                # Query gearmand
+                client = GearmanClient(settings.GEARMAN_SERVERS)
+                # configure the job to request status for - the last four is not needed for Status requests.
+                j = gearman.job.GearmanJob(client.connection_list[0], result.job.handle, None, None, None, None)
+
+                # create a job request 
+                jr = gearman.job.GearmanJobRequest(j)
+                jr.state = 'CREATED'
+
+                # request the state from gearmand
+                res = client.get_job_status(jr)
+
+                # the res structure should now be filled with the status information about the task
+                return (res.status.numerator / res.status.denominator) * 100
+               
+         
+
+
 
 class Run(models.Model):
     simulation = models.ForeignKey(Simulation)
