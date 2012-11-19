@@ -11,8 +11,7 @@ from flumen.utils import cdec
 import datetime 
 import json
 import os
-
-from gearman import GearmanClient
+import sys
 
 class DataSource(models.Model):
     name = models.CharField(max_length = 255)
@@ -430,7 +429,8 @@ class Simulation(models.Model):
     channel_width_y_origin = models.IntegerField(blank=True, null=True)
     aerialmap_width = models.IntegerField(blank=True, null=True)
     aerialmap_height = models.IntegerField(blank=True, null=True)
-
+    channel_tile_job_complete = models.BooleanField(default = False)
+    channel_tile_job_handle = models.CharField(max_length = 255, blank=True, null=True)
 
     def get_ortho_tiles(self):
         rivers = self.rivers.all()
@@ -513,6 +513,20 @@ class Simulation(models.Model):
         }
         return attributes
 
+    def get_channel_tile_status(self):
+        if self.channel_tile_job_complete:
+            return 100
+        else:
+            if os.path.isfile(self.channel_image):
+                self.channel_tile_job_complete = True
+                self.save()
+                return 100
+            else:
+                from riversim.utils import get_gearman_status
+                return get_gearman_status(self.channel_tile_job_handle)
+    
+
+
     def get_channel_width_status(self):
         if self.channel_width_job_complete:
             return 100
@@ -522,24 +536,9 @@ class Simulation(models.Model):
                 self.save()
                 return 100
             else:
-                # Query gearmand
-                client = GearmanClient(settings.GEARMAN_SERVERS)
-                # configure the job to request status for - the last four is not needed for Status requests.
-                j = gearman.job.GearmanJob(client.connection_list[0], result.job.handle, None, None, None, None)
-
-                # create a job request 
-                jr = gearman.job.GearmanJobRequest(j)
-                jr.state = 'CREATED'
-
-                # request the state from gearmand
-                res = client.get_job_status(jr)
-
-                # the res structure should now be filled with the status information about the task
-                return (res.status.numerator / res.status.denominator) * 100
-               
-         
-
-
+                from riversim.utils import get_gearman_status
+                return get_gearman_status(self.channel_width_job_handle)
+    
 
 class Run(models.Model):
     simulation = models.ForeignKey(Simulation)

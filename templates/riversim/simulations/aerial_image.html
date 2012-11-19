@@ -1,0 +1,43 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+<script type="text/javascript">
+$(document).ready(function () {
+
+  //Attach the ajaxStart and ajaxComplete event to the div
+  $('#progress').ajaxStart(function() {
+      $(this).show();
+      $("#next_step").hide();
+  }); 
+
+  $('#progress').ajaxComplete(function() {
+     $(this).hide();
+     $("#next_step").show();
+  }); 
+
+  //Perform the AJAX get
+  $.get(
+      '{% url simulation_aerial_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}', 
+      function(data) {
+        $("#aerial_image").append('<img id="image" src="' + data.image_url + '" width="800"/>');
+      }
+  );
+});
+</script>
+
+<h1>Processing Step 1: Generate Aerial Image</h1>
+
+<div id="progress">
+    Please wait, processing the aerial image. This may take several minutes or
+    more depending on the region you have chosen...<br/>
+    <i class="loader">Loading...</i>
+</div>
+
+<div id="next_step">
+    Next step: <a href="{% url simulation_step simulation_id=simulation.id step_name='channel_image' %}">Generate Channel Image</a>
+</div>
+
+<div id="aerial_image"> 
+</div>
+ 
+{% endblock %}

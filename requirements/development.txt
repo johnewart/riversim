@@ -6,4 +6,6 @@ psycopg2
 lxml
 #-e git://github.com/rosarior/django-sendfile.git#egg=django-sendfile
 gearman
-
+django-tastypie
+TileCache
+gunicorn

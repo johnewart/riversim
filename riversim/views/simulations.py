@@ -48,7 +48,7 @@ def create(request):
                 simulation.stations = stations
 
                 # Return URL
-                redirect_url = reverse('show_simulation', kwargs={'simulation_id': simulation.id})
+                redirect_url = reverse('simulation_step', kwargs={'simulation_id': simulation.id, 'step_name': 'aerial_image'})
                 return HttpResponse(redirect_url, status=200)
             except:
                 e = traceback.print_exc()
@@ -86,11 +86,18 @@ def update(request, simulation_id):
         else:
             # Form update
             try:
-                form = EditSimulationForm(request.POST, instance = simulation)
-                form.save()
-                redirect_url = reverse("show_simulation", kwargs={"simulation_id": simulation.id})
+                model_id = request.POST.get('model_id')
+                name = request.POST.get('name')
+                description = request.POST.get('description')
+                simulation.model = SimulationModel.objects.get(pk=model_id)
+                simulation.name = name
+                simulation.description = description
+                simulation.save()
+
+                redirect_url = reverse("simulation_step", kwargs={"simulation_id": simulation.id, 'step_name': 'aerial_image'})
                 return HttpResponseRedirect(redirect_url)
             except:
+                raise
                 return HttpResponse(status=500)
     except Simulation.DoesNotExist:
         return HttpResponse(status=404)
@@ -99,10 +106,12 @@ def edit(request, simulation_id):
     try:
         simulation = Simulation.objects.get(pk = simulation_id)
         form = EditSimulationForm(instance = simulation)
+        models = SimulationModel.objects.all()
 
         params = {
             'form': form,
             'simulation': simulation,
+            'models': models
         }
         return render_to_response('riversim/simulations/edit.html', params, context_instance=RequestContext(request))
     except Simulation.DoesNotExist:
@@ -154,8 +163,18 @@ def show(request, simulation_id):
         'simulation': simulation
     }
 
-
     return render_to_response('riversim/simulations/show.html', params, context_instance=RequestContext(request))
+
+def step(request, simulation_id, step_name):
+    simulation = Simulation.objects.get(pk=simulation_id)
+    template = "%s.html" % (step_name)
+
+    params = {
+        'simulation': simulation
+    }
+
+    return render_to_response('riversim/simulations/%s' % (template),
+                params, context_instance=RequestContext(request))
 
 def thumbnail(request, simulation, image_type, thumbnail_width):
     thumbnail_width = int(thumbnail_width)
@@ -186,19 +205,41 @@ def thumbnail(request, simulation, image_type, thumbnail_width):
             img = Image.open(fullsizefile)
         else:
             img = simulation.generate_image(image_type)            
-            imgdir = os.path.dirname(fullsizefile)
-            if (not os.path.exists(imgdir)):
-                os.makedirs(imgdir)
-            img.save(fullsizefile, 'PNG')
+            if img:
+                imgdir = os.path.dirname(fullsizefile)
+                if (not os.path.exists(imgdir)):
+                    os.makedirs(imgdir)
+                logging.debug("Writing full-size PNG file...")
+                img.save(fullsizefile, 'PNG')
+            else:
+                if request.is_ajax():
+                    if(image_type == 'channel'):
+                        response_data = {'percent_complete':
+                                simulation.get_channel_tile_status(),
+                                "job_handle":
+                                simulation.channel_tile_job_handle }
+                    else:
+                        response_data = {'percent_complete': -1}
+
+                    json_data = json.dumps(response_data)
+                    return HttpResponse(json_data, mimetype="application/json")
+             
+
 
         # Cache image
+        logging.debug("Generating thumbmail...")
         aspect = float(img.size[0]) / float(img.size[1]) #calculate width/height
         thumb_img = img.resize( (thumbnail_width, int(thumbnail_width / aspect)), Image.BICUBIC)
         thumb_img.save(thumbfile, 'PNG')
 
-    response = HttpResponse(mimetype='image/png')
-    thumb_img.save(response, 'PNG')
-    return response
+    if request.is_ajax():
+        response_data = {'image_url': request.get_full_path() }
+        json_data = json.dumps(response_data)
+        return HttpResponse(json_data, mimetype="application/json")
+    else:
+        response = HttpResponse(mimetype='image/png')
+        thumb_img.save(response, 'PNG')
+        return response
 
 
 def channel_image(request, simulation_id): 
@@ -225,11 +266,11 @@ def channel_width_image_thumbnail(request, simulation_id, thumbnail_width):
     if simulation.channel_width_job_complete:
         response_image = thumbnail(request, simulation, 'width', thumbnail_width)
     else:
-        if not simulation.channel_width_job_handle:
+        if request.GET.get('generate_width', None):
             actual_x = int(request.GET.get('actualX'))
             actual_y = int(request.GET.get('actualY'))
-            natural_width = int(request.GET.get('naturalWidth'))
-            natural_height = int(request.GET.get('naturalHeight'))
+            natural_width = float(request.GET.get('naturalWidth'))
+            natural_height = float(request.GET.get('naturalHeight'))
             start_x = (actual_x / natural_width) * simulation.aerialmap_width
             start_y = (actual_y / natural_height) * simulation.aerialmap_height
 
@@ -238,16 +279,18 @@ def channel_width_image_thumbnail(request, simulation_id, thumbnail_width):
             simulation.save()
 
             simulation.generate_image('width')
+        else:
+            print "Job Handle: %s" % (simulation.channel_width_job_handle)
 
     
     if request.is_ajax(): 
         if response_image:
             response_data = {
-                'channel_width_image' : request.path
+                'image_url' : request.path
             }
         else: 
             response_data = {
-                'percent_complete' : simulation.get_channel_width_status()
+               'percent_complete' : simulation.get_channel_width_status()
             }
         json_data = json.dumps(response_data)
         return HttpResponse(json_data, mimetype="application/json")

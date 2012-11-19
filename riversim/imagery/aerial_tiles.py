@@ -42,8 +42,11 @@ def generate(simulation_id):
     topleft.transform(4326)
     bottomright.transform(4326)
 
-    res_x = abs(bottomright.x - topleft.x) / img.size[0]
-    res_y = abs(topleft.y - bottomright.y) / img.size[1]
+    image_width = img.size[0]
+    image_height = img.size[1]
+
+    res_x = abs(bottomright.x - topleft.x) / image_width
+    res_y = abs(topleft.y - bottomright.y) / image_height
 
     pixels = numpy.array(img)
     driver = gdal.GetDriverByName("GTiff")
@@ -72,8 +75,12 @@ def generate(simulation_id):
     #print "Channel 4 (Alpha)..."
     #dst_ds.GetRasterBand(4).WriteArray(pixels[:,:,3])
 
-    simulation.aerialmap_width = res_x
-    simulation.aerialmap_height = res_y
+    simulation.aerialmap_width = image_width
+    simulation.aerialmap_height = image_height
+
+    print "Updating aerial map width as: %d" % (image_width)
+    print "Updating aerial map height as: %d" % (image_height)
+
     simulation.save()
 
     return img

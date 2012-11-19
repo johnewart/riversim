@@ -11,7 +11,7 @@ import gdal
 
 from riversim.utils import log_traceback
 
-def stitch_tiles(tile_files, image_width=None):
+def stitch_tiles(tile_files, max_image_width=None):
     min_north = None
     max_north = None
     min_east = None
@@ -43,15 +43,18 @@ def stitch_tiles(tile_files, image_width=None):
         num_tiles_y = (max_north - min_north) + 1
         logging.debug("Tiles %d x %d" % (num_tiles_x, num_tiles_y))
 
-        # Resize if needed
-        if image_width != None:
-            width = int(image_width)
-            tile_width = width / num_tiles_x
-            tile_height = tile_width
-
         width = (num_tiles_x * tile_width)
         height = (num_tiles_y * tile_height)
+ 
+        # Resize if needed to match width
+        if max_image_width != None:
+            if width > max_image_width:
+                width = int(max_image_width)
+                tile_width = width / num_tiles_x
+                tile_height = tile_width
+                height = (num_tiles_y * tile_height)
 
+       
         logging.debug("Generating tiled image: %d x %d" % (width, height))
 
         final_image = Image.new("RGBA", (width, height), (0,0,0,0))

@@ -151,7 +151,7 @@ function riversimInit(zoomExtent) {
 											 extractStyles: true
 										 })
 									 }),
-                                    visibility: false,
+                                    visibility: true,
 								   renderers: renderer
                 }
     );
@@ -167,6 +167,7 @@ function riversimInit(zoomExtent) {
 														extractStyles: true
 												})
                      }),
+                    visibility: false,
 										 renderers: renderer
                   }
     );
@@ -336,35 +337,40 @@ function selectSimulationPoint(where)
 {
     map.events.register("click", map , function(e){
         var lonlat = null;
-        var clicklonlat = map.getLonLatFromViewPortPx(e.xy).transform(view_projection, request_projection);
+
+        var clicklonlat = map.getLonLatFromViewPortPx(e.xy); 
+				
+				if (map.projection != request_projection) { 
+					clicklonlat = clicklonlat.transform(view_projection, request_projection);
+				}
 
         var data = {
             "longitude": clicklonlat.lon,
             "latitude": clicklonlat.lat
         };
 
-        $.get(RIVERSIM.urls.closest_point_on_river, data, function(result) {
+        /*$.get(RIVERSIM.urls.closest_point_on_river, data, function(result) {
             lonlat = new OpenLayers.LonLat(result.longitude, result.latitude).transform(request_projection, view_projection);
+						*/
             var update_data = {};
-			var icon = null; 
+						var icon = null; 
             var flagsize = new OpenLayers.Size(27,36);
             var flagoffset = new OpenLayers.Pixel(-(flagsize.w/2), -flagsize.h);
 			
             if(where == 'start')
             { 
-                
-				icon = new OpenLayers.Icon('/static/images/markers/flag_green.png', flagsize, flagoffset);
-                update_data['start_point'] = result.longitude + " " + result.latitude
+								icon = new OpenLayers.Icon('/static/images/markers/flag_green.png', flagsize, flagoffset);
+                update_data['start_point'] = clicklonlat.lon + " " + clicklonlat.lat
             }
 
             if (where == 'end')
             {
-				icon = new OpenLayers.Icon('/static/images/markers/flag_red.png', flagsize, flagoffset);
-                update_data['end_point'] = result.longitude + " " + result.latitude
+								icon = new OpenLayers.Icon('/static/images/markers/flag_red.png', flagsize, flagoffset);
+                update_data['end_point'] = clicklonlat.lon + " " + clicklonlat.lat
             }
 
             $.get("update", update_data, function(result) {
-                var marker = new OpenLayers.Marker(lonlat, icon) ;
+                var marker = new OpenLayers.Marker(clicklonlat, icon) ;
                 markers.addMarker(marker);
             });
 
@@ -378,7 +384,7 @@ function selectSimulationPoint(where)
              markers.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(0,0),icon.clone()));
              */
 
-        }, "json");
+        /*}, "json");*/
 
     });
 }

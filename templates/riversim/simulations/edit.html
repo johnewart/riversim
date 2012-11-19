@@ -5,15 +5,15 @@
         <h1>Editing {{ simulation.name }}</h1>
         <form action="{% url update_simulation simulation_id=simulation.id %}" method="post">
             {% csrf_token %}
-            <form id="add" action="{% url create_simulation simulation_id=simulation.id %}" method="post">
-                {% csrf_token %}
-                <input type="hidden" name="simulation['simulation_id']" value="{{ simulation.id }}"><br/>
-                <label>Name:</label><input type="text" name="simulation['name']"><br/>
-                <label>Short Name:</label><input type="text" name="simulation['short_name']"><br/>
-                <label>Units:</label><input type="text" name="simulation['units']"><br/>
-                <label>Description:</label><textarea name="simulation['description']" rows="15" cols="40"></textarea>
-                <p><input type="submit"></p>
-            </form>
+            <input type="hidden" name="simulation_id" value="{{ simulation.id }}"><br/>
+            <label>Name:</label><input type="text" name="simulation_name"><br/>
+            <label>Model </label><select name="model_id">
+            {% for model in models %}
+            <option value="{{model.id}}">{{model.name}}</option>
+            {% endfor %}
+            </select>
+            <br/>
+            <label>Description:</label><textarea name="description" rows="15" cols="40"></textarea>
             <input type="submit" value="Update">
         </form>
     </div>

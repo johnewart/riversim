@@ -1,0 +1,122 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+<script type="text/javascript">
+// check every 5 seconds
+var checkInterval = 5000; 
+var oldPercentage = null; 
+
+function getStatus()
+{
+  //Perform the AJAX get
+  $.get(
+      '{% url simulation_channel_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}', 
+      function(data) {
+        if(data.percent_complete)
+        {
+
+            if(data.percent_complete == -1)
+            { 
+            $("#percentage").html("Either your job (" + data.job_handle + ") has not been started or something has gone wrong. If this message persists for a long time, please contact <a href='mailto:john@johnewart.net'>john@johnewart.net</a>");
+            } else { 
+                newPercentage = (parseFloat(data.percent_complete));
+                $("#percentage").html( newPercentage.toFixed(0) + "% complete...");
+
+                if (oldPercentage != null) 
+                {
+                    percentPerSecond = (newPercentage - oldPercentage) / (checkInterval / 1000);
+                    seconds = ((100 - newPercentage) / percentPerSecond);
+                    minutes = (seconds / 60).toFixed(1);
+                    $("#remaining").html(minutes + " minutes estimated remaining.");
+                }
+
+                oldPercentage = newPercentage;
+            }
+        }
+
+        if(data.image_url)
+        {
+            $("#next_step").show();
+            $("#channel_width_image").append(
+                '<img id="image" src="' + data.image_url + '" width="800" onload="loupe.add(this,{visible:true,crosshair:true,xview:400,yview:364,opacity:100,name:\'channel_loupe\',resopath:\'/static/images/loupe/\',color:\'#ff0000\'});">'
+             );
+        }
+      }
+  );
+
+}
+
+$(document).ready(function () {
+    getStatus();
+    setInterval( "getStatus()", 5000 );
+});
+</script>
+
+
+<script type="text/javascript" src="/static/js/loupe.js"></script>
+
+<h1>Processing Step 2: Channel Image</h1>
+
+<div id="progress">
+    <p>
+    Please wait, processing the channel image. This may take several minutes<br/>
+    or possibly many more depending on the region you have chosen...<br/>
+    </p>
+
+    <i class="loader">Loading...</i>
+    <div id="percentage"></div>
+    <div id="remaining"></div>
+</div>
+
+<div id="next_step" style="display: none">
+    <p>
+    Using the loupe below, target a region of the river / channel system that<br/>
+    you are interested in. Once the crosshairs are on a region you want, then<br/>
+    proceed to the next step.
+    </p>
+    Next step: <a id="generate_width_image" href="{% url simulation_step simulation_id=simulation.id step_name='channel_width' %}">Generate Channel Width Image</a>
+</div>
+
+<div id="channel_image_container"> 
+</div>
+
+
+<script type="text/javascript">
+    $("#generate_width_image").click(function(event) {
+            event.preventDefault();
+
+			channel_loupe = loupe.G('channel_loupe');
+			channel_image = $('#channel_image')[0];
+			// Center of loupe offsets
+			xoff = channel_loupe.xOff + channel_loupe.halfw; 
+			yoff = channel_loupe.yOff + channel_loupe.halfh; 
+			// Center of loupe on image
+			centerX = channel_image.offsetLeft + channel_loupe.offsetLeft + xoff; 
+			centerY = channel_image.offsetTop + channel_loupe.offsetTop + yoff;
+			// Scale to natural size (non-scaled)
+			actualY = Math.floor((centerY / channel_image.height) * channel_image.naturalHeight); 
+			actualX = Math.floor((centerX / channel_image.width) * channel_image.naturalWidth); 
+			var width_args = {
+					'actualX': actualX, 
+					'actualY': actualY, 
+					'naturalWidth': channel_image.naturalWidth,
+                    'naturalHeight': channel_image.naturalHeight,
+                    'generate_width': 'true'
+			};
+			var a_href = $(this).attr('href');
+			$.ajax({
+				url: "{% url simulation_channel_width_image simulation_id=simulation.id %}", 
+				dataType: 'json',
+				data: width_args,
+				success: function(data){
+                    console.log(data);
+						window.location = a_href; 
+				}
+			});
+
+			return false;
+
+	});
+</script>
+
+{% endblock %}

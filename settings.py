@@ -188,34 +188,50 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.logger.LoggingPanel',
 )
 
-#RIVER_TILES_PATH="/Volumes/Colossus/GIS/Tiles"
-#RIVER_TILES_PATH="/Volumes/Storage Tank/GIS/cvfed/Aerial_Imagery/HDR_LowerSanJoaquin/TIF"
-DATA_ROOT="/riversim"
-RIVER_TILES_PATH="/riversim/imagery/TIF"
+DATA_ROOT="/data/riversim"
+RIVER_TILES_PATH=os.path.join(DATA_ROOT, "imagery", "TIF")
 THUMBNAIL_PATH=os.path.join(DATA_ROOT, "thumbnails")
 TILE_CACHE_PATH=os.path.join(DATA_ROOT, "tile_cache")
-GEOTIFF_PATH="%s/geotiff" % (DATA_ROOT)
-CHANNEL_PATH="%s/channels" % (DATA_ROOT)
-CHANNEL_WIDTH_PATH="%s/channel_widths" % DATA_ROOT
-MAX_AERIAL_IMAGE_WIDTH=20000
-
+GEOTIFF_PATH=os.path.join(DATA_ROOT, "geotiff")
+CHANNEL_PATH=os.path.join(DATA_ROOT, "channels")
+CHANNEL_WIDTH_PATH=os.path.join(DATA_ROOT, "channel_widths")
 TILECACHE_CACHE=os.path.join(DATA_ROOT, "wms_tiles")
+
+MAX_AERIAL_IMAGE_WIDTH=20000
 
 
 # Tilecache
 from TileCache import Service
-from TileCache.Layers import GDAL
 from TileCache.Caches.Disk import Disk
-
+from TileCache.Layers import GDAL 
 
 diskCache = Disk(TILECACHE_CACHE)
-mapLayers = {
-    '26_aerial': GDAL.GDAL("26_aerial", "/riversim/geotiff/26.tiff"),
-    '26_channels': GDAL.GDAL("26_channels", "/riversim/channels/26geo.tiff")
-}
+mapLayers = {}
+
+dirList=os.listdir(GEOTIFF_PATH)
+for fname in dirList:
+    #'26_aerial': GDAL.GDAL("26_aerial", "/data/riversim/geotiff/26.tiff"),
+    #'26_channels': GDAL.GDAL("26_channels", "/data/riversim/channels/26.tiff"),
+    #'26_width': GDAL.GDAL("26_width", "/data/riversim/channel_widths/26.tiff")
+    #print fname
+    if fname in (".", ".."):
+        next
+    print "File: %s" % (fname)
+    (layer, ext) = fname.split(".")
+    print "Layer: %s" % (layer)
+    aerial_key = "%s_aerial" % (layer)
+    channel_key = "%s_channels" % (layer)
+    width_key = "%s_width" % (layer)
+    try:
+        mapLayers[aerial_key] = GDAL.GDAL(aerial_key, os.path.join(GEOTIFF_PATH, "%s.tiff" % (layer)))
+        mapLayers[channel_key] = GDAL.GDAL(channel_key, os.path.join(CHANNEL_PATH, "%s.tiff" % (layer)))
+        mapLayers[width_key] = GDAL.GDAL(width_key, os.path.join(CHANNEL_WIDTH_PATH, "%s.tiff" % (layer)))
+    except:
+        print "Problem adding layer %s" % (layer)
+
+
+
 
 MAP_SERVICE = Service(diskCache, mapLayers)
-
-
 
 

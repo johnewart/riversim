@@ -1,0 +1,73 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+<script type="text/javascript">
+// check every 5 seconds
+var checkInterval = 5000; 
+var oldPercentage = null; 
+
+function getStatus()
+{
+  //Perform the AJAX get
+  $.get(
+      '{% url simulation_channel_width_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}', 
+      function(data) {
+        if(data.percent_complete)
+        {
+
+            if(data.percent_complete == -1)
+            { 
+            $("#percentage").html("Either your job has not been started or something has gone wrong. If this message persists for a long time, please contact <a href='mailto:john@johnewart.net'>john@johnewart.net</a>");
+            } else { 
+                newPercentage = (parseFloat(data.percent_complete));
+                $("#percentage").html( newPercentage.toFixed(0) + "% complete...");
+
+                if (oldPercentage != null) 
+                {
+                    percentPerSecond = (newPercentage - oldPercentage) / (checkInterval / 1000);
+                    seconds = ((100 - newPercentage) / percentPerSecond);
+                    minutes = (seconds / 60).toFixed(1);
+                    $("#remaining").html(minutes + " minutes estimated remaining.");
+                }
+
+                oldPercentage = newPercentage;
+            }
+        }
+
+        if(data.image_url)
+        {
+            $("#next_step").show();
+            $("#channel_width_image").append(
+                    '<img id="image" src="' + data.image_url + '" width="800">'
+                );
+        }
+      }
+  );
+
+}
+
+    $(document).ready(function () {
+        getStatus();
+        setInterval( "getStatus()", 5000 );
+    });
+
+</script>
+
+
+<h1>Processing Step 3: Channel Width Image</h1>
+
+<div id="progress">
+    <p>Please wait, processing the channel widths. This can take a <b>very</b> long time varying with the size of the region you have chosen...<br/>
+    I suggest you go do something for a bit.</p>
+    <i class="loader">Loading...</i>
+    <div id="percentage"></div>
+    <div id="remaining">Estimating remaining time...</div>
+</div>
+
+<div id="next_step" style="visibility: hidden">
+    Done generating imagery: <a id="generate_channel_width_image" href="{% url show_simulation simulation_id=simulation.id %}">Show Simulation</a>
+</div>
+
+<div id="channel_width_image"></div>
+
+{% endblock %}
