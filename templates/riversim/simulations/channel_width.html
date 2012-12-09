@@ -5,6 +5,7 @@
 // check every 5 seconds
 var checkInterval = 5000; 
 var oldPercentage = null; 
+var intervalId;
 
 function getStatus()
 {
@@ -36,10 +37,12 @@ function getStatus()
 
         if(data.image_url)
         {
+            window.clearInterval(intervalId);
+            $("#progress").hide();
             $("#next_step").show();
             $("#channel_width_image").append(
                     '<img id="image" src="' + data.image_url + '" width="800">'
-                );
+                    );
         }
       }
   );
@@ -48,7 +51,7 @@ function getStatus()
 
     $(document).ready(function () {
         getStatus();
-        setInterval( "getStatus()", 5000 );
+        intervalId = setInterval( "getStatus()", 5000 );
     });
 
 </script>
@@ -64,7 +67,7 @@ function getStatus()
     <div id="remaining">Estimating remaining time...</div>
 </div>
 
-<div id="next_step" style="visibility: hidden">
+<div id="next_step" style="display: none">
     Done generating imagery: <a id="generate_channel_width_image" href="{% url show_simulation simulation_id=simulation.id %}">Show Simulation</a>
 </div>
 

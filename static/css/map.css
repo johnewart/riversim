@@ -47,6 +47,15 @@ div.clear {
 
 }
 
+.olControlDrawFeatureItemInactive {
+    background-image: url('/static/images/icons/select-region-inactive.png') !important;
+}
+.olControlDrawFeatureItemActive {
+    background-image: url('/static/images/icons/select-region-active.png') !important;
+}
+
+
+
 #edit_simulation { 
     display: table-cell;
     vertical-align: top;

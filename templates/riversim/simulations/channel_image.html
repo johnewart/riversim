@@ -5,6 +5,43 @@
 // check every 5 seconds
 var checkInterval = 5000; 
 var oldPercentage = null; 
+var intervalId; 
+
+function forceRegeneration()
+{
+  $.get(
+      '{% url simulation_channel_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}?force_creation=true', 
+      function(data) {}
+      );
+}
+
+function attachLoupe(image)
+{
+  loupe.add(image,{ visible:true,crosshair:true,xview:400,yview:364,opacity:100,name:'channel_loupe',resopath:'/static/images/loupe/',color:'#ff0000'});
+  $(document).on("dblclick", "#channel_loupe",  function(e) {
+    channel_loupe = loupe.G('channel_loupe');
+    channel_image = $('#channel_image')[0];
+    // Center of loupe offsets
+    xoff = channel_loupe.xOff + channel_loupe.halfw; 
+    yoff = channel_loupe.yOff + channel_loupe.halfh; 
+    // Center of loupe on image
+    centerX = channel_image.offsetLeft + channel_loupe.offsetLeft + xoff; 
+    centerY = channel_image.offsetTop + channel_loupe.offsetTop + yoff;
+    // Scale to natural size (non-scaled)
+    actualY = Math.floor((centerY / channel_image.height) * channel_image.naturalHeight); 
+    actualX = Math.floor((centerX / channel_image.width) * channel_image.naturalWidth); 
+
+    points.push({ x: actualX, y: actualY });
+    img = $('<img />')
+      .attr({ 'id': 'marker_' + points.length + 1, 'src': '/static/images/markers/pin_magenta.png' })
+      .css('left', centerX - 18)
+      .css('top', centerY - 36)
+      .css('z-index', 500)
+      .css('position', 'absolute')
+      .appendTo($('#channel_image_container'));
+  });
+
+}
 
 function getStatus()
 {
@@ -12,17 +49,20 @@ function getStatus()
   $.get(
       '{% url simulation_channel_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}', 
       function(data) {
-        if(data.percent_complete)
+        if(data.percent_complete != null)
         {
-
             if(data.percent_complete == -1)
             { 
-            $("#percentage").html("Either your job (" + data.job_handle + ") has not been started or something has gone wrong. If this message persists for a long time, please contact <a href='mailto:john@johnewart.net'>john@johnewart.net</a>");
+            $("#percentage").html(
+              "Either your job (" + data.job_handle + ") has not been started or something has gone wrong. If this message persists for a long time, please contact <a href='mailto:john@johnewart.net'>john@johnewart.net</a><br/>" +
+              "Click <a href='javascript:forceRegeneration'>here</a> to force re-generation of the image."
+             );
             } else { 
                 newPercentage = (parseFloat(data.percent_complete));
+                
                 $("#percentage").html( newPercentage.toFixed(0) + "% complete...");
 
-                if (oldPercentage != null) 
+                if (oldPercentage != null && oldPercentage != newPercentage) 
                 {
                     percentPerSecond = (newPercentage - oldPercentage) / (checkInterval / 1000);
                     seconds = ((100 - newPercentage) / percentPerSecond);
@@ -36,19 +76,22 @@ function getStatus()
 
         if(data.image_url)
         {
+            window.clearInterval(intervalId);
+            $("#progress").hide();
             $("#next_step").show();
-            $("#channel_width_image").append(
-                '<img id="image" src="' + data.image_url + '" width="800" onload="loupe.add(this,{visible:true,crosshair:true,xview:400,yview:364,opacity:100,name:\'channel_loupe\',resopath:\'/static/images/loupe/\',color:\'#ff0000\'});">'
-             );
+            $("#channel_image_container").append(
+                '<img id="channel_image" src="' + data.image_url + '" width="800" onload="attachLoupe(this);">'
+                 //'<img id="channel_image" src="' + data.image_url + '" width="800">' 
+            );
         }
-      }
+    }
   );
 
 }
 
 $(document).ready(function () {
     getStatus();
-    setInterval( "getStatus()", 5000 );
+    intervalId = setInterval( "getStatus()", 5000 );
 });
 </script>
 
@@ -77,37 +120,28 @@ $(document).ready(function () {
     Next step: <a id="generate_width_image" href="{% url simulation_step simulation_id=simulation.id step_name='channel_width' %}">Generate Channel Width Image</a>
 </div>
 
-<div id="channel_image_container"> 
+<div id="channel_image_container" style="position: relative"> 
 </div>
-
+<script type="text/javascript">
+  var points = [];
+</script>
 
 <script type="text/javascript">
     $("#generate_width_image").click(function(event) {
-            event.preventDefault();
+      event.preventDefault();
 
-			channel_loupe = loupe.G('channel_loupe');
-			channel_image = $('#channel_image')[0];
-			// Center of loupe offsets
-			xoff = channel_loupe.xOff + channel_loupe.halfw; 
-			yoff = channel_loupe.yOff + channel_loupe.halfh; 
-			// Center of loupe on image
-			centerX = channel_image.offsetLeft + channel_loupe.offsetLeft + xoff; 
-			centerY = channel_image.offsetTop + channel_loupe.offsetTop + yoff;
-			// Scale to natural size (non-scaled)
-			actualY = Math.floor((centerY / channel_image.height) * channel_image.naturalHeight); 
-			actualX = Math.floor((centerX / channel_image.width) * channel_image.naturalWidth); 
 			var width_args = {
-					'actualX': actualX, 
-					'actualY': actualY, 
 					'naturalWidth': channel_image.naturalWidth,
-                    'naturalHeight': channel_image.naturalHeight,
-                    'generate_width': 'true'
+          'naturalHeight': channel_image.naturalHeight,
+          'generate_width': 'true',
+          'points': points
 			};
 			var a_href = $(this).attr('href');
-			$.ajax({
+      $.ajax({
+        type: 'POST',
 				url: "{% url simulation_channel_width_image simulation_id=simulation.id %}", 
 				dataType: 'json',
-				data: width_args,
+				data: JSON.stringify(width_args),
 				success: function(data){
                     console.log(data);
 						window.location = a_href; 

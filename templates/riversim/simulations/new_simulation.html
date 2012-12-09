@@ -1,0 +1,20 @@
+{% extends "base_layout.html" %}
+
+{% block content %}
+    <div id="simulation">
+        <form action="{%  url create_simulation %}" method="POST">
+            {% csrf_token %}
+            <input type="text" name="simulation['name']">
+            <select name="simulation['rivers']" multiple>
+                {% for entry in river_names %}
+                    {% if entry.selected %}
+                        <option value="{{entry.name}}" selected="selected" onChange="toggleRiver()">{{entry.name|title}}</option>
+                    {% else %}
+                        <option value="{{entry.name}}" onChange="toggleRiver()">{{entry.name|title}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <input type="submit" value="Create">
+        </form>
+    </div>
+{% endblock %}

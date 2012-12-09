@@ -189,6 +189,10 @@ def thumbnail(request, simulation, image_type, thumbnail_width):
     
     thumbdir = os.path.dirname(thumbfile)
 
+    force_creation = (request.GET.get("force_creation", None) != None)
+
+    logging.debug("Force creation flag: %s" % (force_creation))
+
     if(not os.path.exists(thumbdir)):
         os.makedirs(thumbdir)
     
@@ -200,11 +204,11 @@ def thumbnail(request, simulation, image_type, thumbnail_width):
     else:
         logging.debug("Full size image: %s" % (fullsizefile))
         # If we have a full-sized cached image, use that rather than re-building the image
-        if os.path.isfile(fullsizefile):
+        if os.path.isfile(fullsizefile) and force_creation == False:
             logging.debug("Resizing %s to %d px in width" % (fullsizefile, thumbnail_width))
             img = Image.open(fullsizefile)
         else:
-            img = simulation.generate_image(image_type)            
+            img = simulation.generate_image(image_type, force_creation)            
             if img:
                 imgdir = os.path.dirname(fullsizefile)
                 if (not os.path.exists(imgdir)):
@@ -212,7 +216,9 @@ def thumbnail(request, simulation, image_type, thumbnail_width):
                 logging.debug("Writing full-size PNG file...")
                 img.save(fullsizefile, 'PNG')
             else:
+                logging.debug("No image, yet...")
                 if request.is_ajax():
+                    logging.debug("image: %s" % (image_type))
                     if(image_type == 'channel'):
                         response_data = {'percent_complete':
                                 simulation.get_channel_tile_status(),
@@ -222,12 +228,15 @@ def thumbnail(request, simulation, image_type, thumbnail_width):
                         response_data = {'percent_complete': -1}
 
                     json_data = json.dumps(response_data)
+                    logging.debug("Response: %s" % (json_data))
                     return HttpResponse(json_data, mimetype="application/json")
+                else: 
+                    return HttpResponse("Queued!")
              
 
 
         # Cache image
-        logging.debug("Generating thumbmail...")
+        logging.debug("Generating thumbnail...")
         aspect = float(img.size[0]) / float(img.size[1]) #calculate width/height
         thumb_img = img.resize( (thumbnail_width, int(thumbnail_width / aspect)), Image.BICUBIC)
         thumb_img.save(thumbfile, 'PNG')
@@ -266,21 +275,24 @@ def channel_width_image_thumbnail(request, simulation_id, thumbnail_width):
     if simulation.channel_width_job_complete:
         response_image = thumbnail(request, simulation, 'width', thumbnail_width)
     else:
-        if request.GET.get('generate_width', None):
-            actual_x = int(request.GET.get('actualX'))
-            actual_y = int(request.GET.get('actualY'))
-            natural_width = float(request.GET.get('naturalWidth'))
-            natural_height = float(request.GET.get('naturalHeight'))
-            start_x = (actual_x / natural_width) * simulation.aerialmap_width
-            start_y = (actual_y / natural_height) * simulation.aerialmap_height
+        if request.POST:
+            logging.debug("DATA: %s" % (request.raw_post_data))
+            request_data = json.loads(request.raw_post_data)
+            logging.debug("Values: %s", (request_data))
+            if request_data['generate_width']:
+                points = request_data['points']
+                for point in points:
+                    logging.debug("Point: %d,%d" % (point['x'], point['y']))
+                natural_width = int(request_data['naturalWidth'])
+                natural_height = int(request_data['naturalHeight'])
+                simulation.channel_width_points = json.dumps(points)
+                simulation.channel_width_natural_width = natural_width
+                simulation.channel_width_natural_height = natural_height
+                simulation.save()
 
-            simulation.channel_width_x_origin = start_x
-            simulation.channel_width_y_origin = start_y
-            simulation.save()
-
-            simulation.generate_image('width')
-        else:
-            print "Job Handle: %s" % (simulation.channel_width_job_handle)
+                simulation.generate_image('width', True)
+            else:
+                print "Job Handle: %s" % (simulation.channel_width_job_handle)
 
     
     if request.is_ajax(): 

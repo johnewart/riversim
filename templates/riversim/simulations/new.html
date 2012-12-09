@@ -1,20 +1,59 @@
 {% extends "base_layout.html" %}
 
 {% block content %}
-    <div id="simulation">
-        <form action="{%  url create_simulation %}" method="POST">
-            {% csrf_token %}
-            <input type="text" name="simulation['name']">
-            <select name="simulation['rivers']" multiple>
-                {% for entry in river_names %}
-                    {% if entry.selected %}
-                        <option value="{{entry.name}}" selected="selected" onChange="toggleRiver()">{{entry.name|title}}</option>
-                    {% else %}
-                        <option value="{{entry.name}}" onChange="toggleRiver()">{{entry.name|title}}</option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-            <input type="submit" value="Create">
-        </form>
+<h1>New Simulation</h1>
+<div id="help">
+To create a new simulation:
+<ol>
+    <li>Pan around the map to the region you are interested in using the pan
+    tool (<img src="/static/images/icons/pan.png">) to find the general
+    area.</li>
+    <li>Zoom into the specific area of interest using the region zoom tool
+    (<img src="/static/images/icons/zoom-selection.png">) to get close enough
+    to see the region</li>
+    <li>Draw a polygon around the specific feature / features you are
+    interested in using the polygon selection tool (<img
+    src="/static/images/icons/select-region-inactive.png">)</li>
+    <li>Click "Create a new simulation from selection" to proceed to the next
+    step</li>
+  </ol>
+  <h4>Note:</h4>
+  There are 4 high-resolution image tiles per LiDAR tile -- the more image tiles you choose, the longer 
+  things will take to process. 
+</div>
+    <script type="text/javascript">
+        {% if simulation %}
+        zoomExtent = new OpenLayers.Bounds{{  simulation.region.extent }};
+        {% else %}
+        zoomExtent = null;
+        {% endif %}
+
+        $(document).ready(function() {
+            riversimInit(zoomExtent);
+        });
+    </script>
+    <h3>Map</h3>
+    <div id="map">
     </div>
-{% endblock %}
+
+    <div class="clear"></div>
+    <div class="legend">
+      <h3>Legend</h3>
+      <table>
+        <tr>
+          <td><img src="/static/images/icons/lidar-tile.png"></td>
+          <td>LiDAR tile</td>
+        </tr>
+        <tr>
+          <td><img src="/static/images/icons/river-tile.png"></td>
+          <td>Rivers</td>
+        </tr>
+      </table>
+    </div>
+
+    <div id="map_actions">
+      <h2><a href="#" onclick="createSimulationFromMap();">Create a new simulation from selection</a></h2>
+   </div>
+</div>
+
+ {% endblock %}

@@ -431,6 +431,10 @@ class Simulation(models.Model):
     aerialmap_height = models.IntegerField(blank=True, null=True)
     channel_tile_job_complete = models.BooleanField(default = False)
     channel_tile_job_handle = models.CharField(max_length = 255, blank=True, null=True)
+    channel_width_points = models.CharField(max_length = 255, null=True)
+    channel_width_natural_width = models.IntegerField(blank = True, null = True)
+    channel_width_natural_height = models.IntegerField(blank = True, null = True)
+
 
     def get_ortho_tiles(self):
         rivers = self.rivers.all()
@@ -450,15 +454,15 @@ class Simulation(models.Model):
 
     ortho_tiles = property(get_ortho_tiles)
 
-    def generate_image(self, image_type):
+    def generate_image(self, image_type, force_creation = False):
         from riversim.imagery import channel_tiles, aerial_tiles, channel_width
 
         if image_type == "aerial":
-            img = aerial_tiles.generate(self.id)
+            img = aerial_tiles.generate(self.id, force_creation)
         elif image_type == "channel":
-            img = channel_tiles.generate(self.id)
+            img = channel_tiles.generate(self.id, force_creation)
         elif image_type == "width":
-            img = channel_width.generate(self.id)
+            img = channel_width.generate(self.id, force_creation)
 
         return img
 
@@ -523,8 +527,12 @@ class Simulation(models.Model):
                 return 100
             else:
                 from riversim.utils import get_gearman_status
-                return get_gearman_status(self.channel_tile_job_handle)
-    
+                try:
+                    res = get_gearman_status(self.channel_tile_job_handle)
+                    return (float(res.status['numerator']) / float(res.status['denominator'])) * 100
+                except: 
+                    return -1
+        
 
 
     def get_channel_width_status(self):
@@ -537,7 +545,11 @@ class Simulation(models.Model):
                 return 100
             else:
                 from riversim.utils import get_gearman_status
-                return get_gearman_status(self.channel_width_job_handle)
+                try:
+                    res = get_gearman_status(self.channel_width_job_handle)
+                    return (float(res.status['numerator']) / float(res.status['denominator'])) * 100
+                except: 
+                    return -1
     
 
 class Run(models.Model):

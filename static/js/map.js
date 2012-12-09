@@ -423,9 +423,15 @@ function toggleRiverSelection() {
     reloadLayer(selected_lidar_tiles);
     reloadLayer(cdec_stations);
 }
+
+
+
    
 $(document).ready(function() { 
     $('.riverselect').change(function() {
         toggleRiverSelection();
     });
 });
+
+
+

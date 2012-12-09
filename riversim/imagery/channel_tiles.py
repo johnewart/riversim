@@ -25,16 +25,16 @@ from gearman import GearmanClient
 
 import logging, traceback
 
-def generate(simulation_id):
+def generate(simulation_id, force_creation = False):
   simulation = Simulation.objects.get(pk = simulation_id)
 
   geotiff_image = simulation.aerial_geotiff
   channel_image = simulation.channel_image
 
       
-  if not os.path.isfile(channel_image):
+  if (not os.path.isfile(channel_image)) or force_creation == True:
 
-    if simulation.channel_tile_job_handle:
+    if simulation.channel_tile_job_handle and force_creation == False:
         logging.debug("Job handle: %s already exists, not re-queueing" % (simulation.channel_tile_job_handle)) 
         return None
     else:

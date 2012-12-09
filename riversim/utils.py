@@ -53,7 +53,7 @@ def get_gearman_status(job_handle):
         res = client.get_job_status(jr)
 
         # the res structure should now be filled with the status information about the task
-        return (float(res.status['numerator']) / float(res.status['denominator'])) * 100
+        return res
     except: 
         print "Unexpected error:", sys.exc_info()[0]
         return -1

@@ -1,32 +1,8 @@
 {% extends "base_layout.html" %}
 {% block content %}
-    <script type="text/javascript">
-        {% if simulation %}
-        zoomExtent = new OpenLayers.Bounds{{  simulation.region.extent }};
-        {% else %}
-        zoomExtent = null;
-        {% endif %}
-
-        $(document).ready(function() {
-            riversimInit(zoomExtent);
-        });
-    </script>
-
-    <div id="map">
-    </div>
-
-    <div class="clear"></div>
-
-    <div id="map_actions">
-        <a href="#" onclick="createSimulationFromMap();">Create a new simulation from selection</a>
-
-        {% if simulation %}
-        <a href="?clear_simulation=1">Clear simulation</a>
-        {% endif %}
-    </div>
-
     <div id="simulations">
-    <h2>Simulations</h2>
+      <h2>Simulations (<a href="{% url new_simulation %}">Create a new simulation</a>)</h2>
+      <h3>Existing Simulations</h3>
     {% if simulations  %}
         <ul>
         {% for simulation in simulations %}
