@@ -176,7 +176,7 @@ def step(request, simulation_id, step_name):
     return render_to_response('riversim/simulations/%s' % (template),
                 params, context_instance=RequestContext(request))
 
-def thumbnail(request, simulation, image_type, thumbnail_width):
+def thumbnail(request, simulation, image, thumbnail_width):
     thumbnail_width = int(thumbnail_width)
 
     if (thumbnail_width > settings.MAX_AERIAL_IMAGE_WIDTH):
@@ -184,14 +184,12 @@ def thumbnail(request, simulation, image_type, thumbnail_width):
 
     logging.debug("Thumbnail width: %s px" % (thumbnail_width))
 
-    thumbfile = simulation.thumbnail_path(image_type, thumbnail_width)
-    fullsizefile = simulation.thumbnail_path(image_type, settings.MAX_AERIAL_IMAGE_WIDTH)
+    thumbfile = image.thumbnail_path(thumbnail_width)
+    fullsizefile = image.thumbnail_path(settings.MAX_AERIAL_IMAGE_WIDTH)
     
     thumbdir = os.path.dirname(thumbfile)
 
     force_creation = (request.GET.get("force_creation", None) != None)
-
-    logging.debug("Force creation flag: %s" % (force_creation))
 
     if(not os.path.exists(thumbdir)):
         os.makedirs(thumbdir)
@@ -204,18 +202,29 @@ def thumbnail(request, simulation, image_type, thumbnail_width):
     else:
         logging.debug("Full size image: %s" % (fullsizefile))
         # If we have a full-sized cached image, use that rather than re-building the image
-        if os.path.isfile(fullsizefile) and force_creation == False:
-            logging.debug("Resizing %s to %d px in width" % (fullsizefile, thumbnail_width))
-            img = Image.open(fullsizefile)
-        else:
-            img = simulation.generate_image(image_type, force_creation)            
-            if img:
+        if (not os.path.isfile(fullsizefile)) or force_creation == True:
+           if os.path.isfile(image.filename):
+                img = Image.open(image.filename)
                 imgdir = os.path.dirname(fullsizefile)
                 if (not os.path.exists(imgdir)):
                     os.makedirs(imgdir)
                 logging.debug("Writing full-size PNG file...")
                 img.save(fullsizefile, 'PNG')
-            else:
+
+        logging.debug("Resizing %s to %d px in width" % (fullsizefile, thumbnail_width))
+        img = Image.open(fullsizefile)
+ 
+        # Cache image
+        logging.debug("Generating thumbnail...")
+        aspect = float(img.size[0]) / float(img.size[1]) #calculate width/height
+        thumb_img = img.resize( (thumbnail_width, int(thumbnail_width / aspect)), Image.BICUBIC)
+        thumb_img.save(thumbfile, 'PNG')
+
+    response = HttpResponse(mimetype='image/png')
+    thumb_img.save(response, 'PNG')
+    return response
+
+"""
                 logging.debug("No image, yet...")
                 if request.is_ajax():
                     logging.debug("image: %s" % (image_type))
@@ -232,82 +241,76 @@ def thumbnail(request, simulation, image_type, thumbnail_width):
                     return HttpResponse(json_data, mimetype="application/json")
                 else: 
                     return HttpResponse("Queued!")
-             
-
-
-        # Cache image
-        logging.debug("Generating thumbnail...")
-        aspect = float(img.size[0]) / float(img.size[1]) #calculate width/height
-        thumb_img = img.resize( (thumbnail_width, int(thumbnail_width / aspect)), Image.BICUBIC)
-        thumb_img.save(thumbfile, 'PNG')
-
-    if request.is_ajax():
-        response_data = {'image_url': request.get_full_path() }
-        json_data = json.dumps(response_data)
-        return HttpResponse(json_data, mimetype="application/json")
-    else:
-        response = HttpResponse(mimetype='image/png')
-        thumb_img.save(response, 'PNG')
-        return response
-
+"""             
 
 def channel_image(request, simulation_id): 
     return channel_image_thumbnail(request, simulation_id, settings.MAX_AERIAL_IMAGE_WIDTH)
 
 def channel_image_thumbnail(request, simulation_id, thumbnail_width):
     simulation = Simulation.objects.get(pk=simulation_id)
-    return thumbnail(request, simulation, "channel", thumbnail_width)
+    try:
+        channel_map = simulation.channelmap
+    except ChannelMap.DoesNotExist:
+        channel_map = ChannelMap(simulation = simulation)
+        channel_map.save()
+
+    return status_or_thumbnail(request, simulation, simulation.channelmap, thumbnail_width)
 
 def aerial_image(request, simulation_id):
     return aerial_image_thumbnail(request, simulation_id, settings.MAX_AERIAL_IMAGE_WIDTH)
 
 def aerial_image_thumbnail(request, simulation_id, thumbnail_width):
     simulation = Simulation.objects.get(pk=simulation_id)
-    return thumbnail(request, simulation, "aerial", thumbnail_width)
+    try: 
+        aerialmap = simulation.aerialmap
+    except AerialMap.DoesNotExist:
+        aerialmap = AerialMap(simulation = simulation)
+        aerialmap.save()
+
+    return status_or_thumbnail(request, simulation, aerialmap, thumbnail_width)
 
 def channel_width_image(request, simulation_id):
     return channel_width_image_thumbnail(request, simulation_id, settings.MAX_AERIAL_IMAGE_WIDTH)
 
 def channel_width_image_thumbnail(request, simulation_id, thumbnail_width): 
     simulation = Simulation.objects.get(pk = simulation_id)
+    try:
+        channel_width_map = simulation.channelwidthmap
+    except ChannelWidthMap.DoesNotExist:
+        channel_width_map = ChannelWidthMap(simulation = simulation)
+        channel_width_map.save()
+    return status_or_thumbnail(request, simulation, channel_width_map, thumbnail_width)
+
+def status_or_thumbnail(request, simulation, image, thumbnail_width):
     response_image = None
 
-    if simulation.channel_width_job_complete:
-        response_image = thumbnail(request, simulation, 'width', thumbnail_width)
-    else:
+    if not image.job_complete:
+        force = False
+
+        if request.GET:
+            force = request.GET.get('force_creation', False)
+
         if request.POST:
-            logging.debug("DATA: %s" % (request.raw_post_data))
-            request_data = json.loads(request.raw_post_data)
-            logging.debug("Values: %s", (request_data))
-            if request_data['generate_width']:
-                points = request_data['points']
-                for point in points:
-                    logging.debug("Point: %d,%d" % (point['x'], point['y']))
-                natural_width = int(request_data['naturalWidth'])
-                natural_height = int(request_data['naturalHeight'])
-                simulation.channel_width_points = json.dumps(points)
-                simulation.channel_width_natural_width = natural_width
-                simulation.channel_width_natural_height = natural_height
-                simulation.save()
+            options = json.loads(request.raw_post_data)
+        else:
+            options = {}
 
-                simulation.generate_image('width', True)
-            else:
-                print "Job Handle: %s" % (simulation.channel_width_job_handle)
-
+        image.generate(options, force)
     
     if request.is_ajax(): 
-        if response_image:
+        if image.job_complete:
             response_data = {
                 'image_url' : request.path
             }
         else: 
             response_data = {
-               'percent_complete' : simulation.get_channel_width_status()
+               'job_status' : image.job_status,
+               'job_handle' : image.job_handle
             }
         json_data = json.dumps(response_data)
         return HttpResponse(json_data, mimetype="application/json")
     else:
-        return thumbnail(request, simulation, "width", thumbnail_width)
+        return thumbnail(request, simulation, image, thumbnail_width)
 
 def show_run(request, simulation_id, simulation_run_id):
     return HttpResponse(status=200)

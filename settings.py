@@ -132,7 +132,9 @@ INSTALLED_APPS = (
     'riversim',
     'debug_toolbar',
     'south',
-    'gunicorn'
+    'gunicorn',
+    'tastypie'
+
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -195,6 +197,7 @@ TILE_CACHE_PATH=os.path.join(DATA_ROOT, "tile_cache")
 GEOTIFF_PATH=os.path.join(DATA_ROOT, "geotiff")
 CHANNEL_PATH=os.path.join(DATA_ROOT, "channels")
 CHANNEL_WIDTH_PATH=os.path.join(DATA_ROOT, "channel_widths")
+ELEVATION_MAP_PATH=os.path.join(DATA_ROOT, "elevation_maps")
 TILECACHE_CACHE=os.path.join(DATA_ROOT, "wms_tiles")
 
 MAX_AERIAL_IMAGE_WIDTH=20000

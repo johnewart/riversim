@@ -1,8 +1,16 @@
 from django.conf.urls.defaults import *
+from tastypie.api import Api
+from riversim.api import *
+
+api = Api()
+api.register(SimulationResource())
 
 urlpatterns = patterns('riversim',
     url(r'login/?$', 'views.public.do_login', name='login'),
     url(r'kml/(?P<layer>[^/]+)$', 'views.rivers.kml', name='kml'),
+
+    # API
+    url(r'api/', include(api.urls)),
 
     # Stations
     url(r'stations/?$', 'views.stations.list', name='list_stations'),

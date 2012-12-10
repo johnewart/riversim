@@ -13,15 +13,17 @@ function getStatus()
   $.get(
       '{% url simulation_channel_width_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}', 
       function(data) {
-        if(data.percent_complete)
+        if(data.job_status != null)
         {
 
-            if(data.percent_complete == -1)
+            if(data.job_status.percentage == -1)
             { 
-            $("#percentage").html("Either your job has not been started or something has gone wrong. If this message persists for a long time, please contact <a href='mailto:john@johnewart.net'>john@johnewart.net</a>");
+              $("#percentage").html("Either your job has not been started or something has gone wrong. If this message persists for a long time, please contact <a href='mailto:john@johnewart.net'>john@johnewart.net</a>");
             } else { 
-                newPercentage = (parseFloat(data.percent_complete));
-                $("#percentage").html( newPercentage.toFixed(0) + "% complete...");
+              newPercentage = (parseFloat(data.job_status.percentage));
+              completed = data.job_status.completed.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+              total = data.job_status.total.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
+                $("#percentage").html( completed + " / " + total + " pixels (" + newPercentage.toFixed(0) + "%) processed...");
 
                 if (oldPercentage != null) 
                 {
@@ -51,7 +53,7 @@ function getStatus()
 
     $(document).ready(function () {
         getStatus();
-        intervalId = setInterval( "getStatus()", 5000 );
+        intervalId = window.setInterval( "getStatus()", 5000 );
     });
 
 </script>

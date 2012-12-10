@@ -70,7 +70,7 @@ def home(request):
             seen.append(name)
 
     if request.user.is_authenticated():
-        simulations = request.user.simulation_set.all()
+        simulations = request.user.simulation_set.all().order_by('id')
     else:
         simulations = []
 

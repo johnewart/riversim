@@ -19,9 +19,9 @@ from riversim.models import *
 
 import logging, traceback
 
-def generate(simulation_id):
+def generate(aerial_map):
     tile_path = settings.RIVER_TILES_PATH
-    simulation = Simulation.objects.get(pk = simulation_id)
+    simulation = aerial_map.simulation
     tiles = simulation.ortho_tiles
 
     img_tiles = []
@@ -51,7 +51,7 @@ def generate(simulation_id):
     pixels = numpy.array(img)
     driver = gdal.GetDriverByName("GTiff")
 
-    geotiff_file = simulation.aerial_geotiff
+    geotiff_file = aerial_map.filename
     geotiff_dir = os.path.dirname(geotiff_file)
     if(not os.path.exists(geotiff_dir)):
         os.makedirs(geotiff_dir)

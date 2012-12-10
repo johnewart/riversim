@@ -12,6 +12,10 @@ import datetime
 import json
 import os
 import sys
+import Image
+import logging
+
+from gearman import GearmanClient
 
 class DataSource(models.Model):
     name = models.CharField(max_length = 255)
@@ -434,55 +438,36 @@ class Simulation(models.Model):
     channel_width_points = models.CharField(max_length = 255, null=True)
     channel_width_natural_width = models.IntegerField(blank = True, null = True)
     channel_width_natural_height = models.IntegerField(blank = True, null = True)
+    elevation_map_job_handle = models.CharField(max_length = 255, blank = True, null = True)
+    elevation_map_job_complete = models.BooleanField(default = False)
+
+    def get_lidar_tiles(self):
+        return LidarTile.objects.filter(geom__bboverlaps=self.region)       
+
+    def get_lidar_tile_files(self):
+        file_list = []
+        for lidar_tile in self.get_lidar_tiles():
+            file_list.append(lidar_tile.tile)
+
+        return file_list
 
 
     def get_ortho_tiles(self):
         rivers = self.rivers.all()
 
         tileQ = Q()
-        #tiles = []
         for river in rivers:
             thegeom = river.geom.buffer(0.01)
             tileQ |= Q(geom__intersects=thegeom)
-            #river_tiles = OrthoTile.objects.filter(geom__dwithin=(river.geom, 0.02))
-            #tiles.extend(river_tiles)
-            #stations = CDECStation.objects.filter(geom__dwithin=(river.geom, 0.02))
 
-        tiles = OrthoTile.objects.filter(tileQ).filter(geom__bboverlaps=self.region)
-        
-        return tiles 
+        return OrthoTile.objects.filter(tileQ).filter(geom__bboverlaps=self.region)
 
-    ortho_tiles = property(get_ortho_tiles)
+    def get_ortho_tile_files(self):
+        file_list = []
+        for ortho_tile in self.get_ortho_tiles():
+            file_list.append(ortho_tile.tile)
 
-    def generate_image(self, image_type, force_creation = False):
-        from riversim.imagery import channel_tiles, aerial_tiles, channel_width
-
-        if image_type == "aerial":
-            img = aerial_tiles.generate(self.id, force_creation)
-        elif image_type == "channel":
-            img = channel_tiles.generate(self.id, force_creation)
-        elif image_type == "width":
-            img = channel_width.generate(self.id, force_creation)
-
-        return img
-
-    def thumbnail_path(self, image_type, width):
-        return os.path.join(settings.THUMBNAIL_PATH, "%s_cache" % (image_type), str(width), "%s.png" % (self.id))
-
-    def _aerial_geotiff(self):
-        return os.path.join(settings.GEOTIFF_PATH, "%s.tiff" % (self.id))
-
-    aerial_geotiff = property(_aerial_geotiff)
-
-    def _channel_image(self):
-        return os.path.join(settings.CHANNEL_PATH, "%s.tiff" % (self.id))
-
-    channel_image = property(_channel_image)
-
-    def _channel_width_image(self):
-        return os.path.join(settings.CHANNEL_WIDTH_PATH, "%s.tiff" % (self.id))
-
-    channel_width_image = property(_channel_width_image)
+        return file_list
 
     def _elevation_change(self):
         try:
@@ -490,6 +475,10 @@ class Simulation(models.Model):
         except:
             return -1
 
+    lidar_tiles = property(get_lidar_tiles)
+    lidar_tile_files = property(get_lidar_tile_files)
+    ortho_tiles = property(get_ortho_tiles)
+    ortho_tile_files = property(get_ortho_tile_files)
     elevation_change = property(_elevation_change)
 
     def __str__(self):
@@ -516,41 +505,6 @@ class Simulation(models.Model):
             } 
         }
         return attributes
-
-    def get_channel_tile_status(self):
-        if self.channel_tile_job_complete:
-            return 100
-        else:
-            if os.path.isfile(self.channel_image):
-                self.channel_tile_job_complete = True
-                self.save()
-                return 100
-            else:
-                from riversim.utils import get_gearman_status
-                try:
-                    res = get_gearman_status(self.channel_tile_job_handle)
-                    return (float(res.status['numerator']) / float(res.status['denominator'])) * 100
-                except: 
-                    return -1
-        
-
-
-    def get_channel_width_status(self):
-        if self.channel_width_job_complete:
-            return 100
-        else:
-            if os.path.isfile(self.channel_width_image):
-                self.channel_width_job_complete = True
-                self.save()
-                return 100
-            else:
-                from riversim.utils import get_gearman_status
-                try:
-                    res = get_gearman_status(self.channel_width_job_handle)
-                    return (float(res.status['numerator']) / float(res.status['denominator'])) * 100
-                except: 
-                    return -1
-    
 
 class Run(models.Model):
     simulation = models.ForeignKey(Simulation)
@@ -579,3 +533,141 @@ class RunParameter(models.Model):
 
     def __str__(self):
         return "%f %s" % (self.value, self.model_parameter.units)
+
+class SimulationImageMap(models.Model):
+    image_root = None
+    thumbnail_root = None
+    simulation = models.OneToOneField(Simulation)
+    job_handle = models.CharField(max_length = 255, null = True, blank = True)
+    job_complete = models.BooleanField(default = False)
+
+    def _filename(self):
+        return os.path.join(self.image_root, "%s.tiff" % (self.simulation.id))
+
+    def thumbnail_path(self, width):
+        return os.path.join(self.thumbnail_root, str(width), "%s.png" % (self.simulation.id))
+
+    def get_run_parameters(self):
+        return {}
+
+    def _job_status(self):
+        if os.path.isfile(self.filename):
+            self.job_complete = True
+            self.save()
+
+        result = {
+                'completed': None, 
+                'total': None,
+                'percentage': 0
+                }
+        if self.job_complete:
+             result['percentage'] = 100
+        else:
+            from riversim.utils import get_gearman_status
+            try:
+                res = get_gearman_status(self.job_handle)
+                result['completed'] = res.status['numerator']
+                result['total'] = res.status['denominator']
+                result['percentage'] = (float(res.status['numerator']) / float(res.status['denominator'])) * 100
+            except: 
+                result['percentage'] = -1
+
+        return result
+
+    def submit_job(self, force = False):
+        if(self.job_handle and force == False):
+            logging.debug("That job's already been submitted.")
+        else: 
+            logging.debug("Submitting job to generate %s" % (self.filename))
+            client = GearmanClient(settings.GEARMAN_SERVERS)
+            jobdata = json.dumps(self.get_run_parameters())
+            jobrequest = client.submit_job(self.job_queue, jobdata, background=True)
+
+            self.job_handle = jobrequest.gearman_job.handle
+            self.job_complete = False
+            self.save()
+
+    def generate(self, options = {}, force = False):
+        if not os.path.isfile(self.filename) or force == True:
+            self.submit_job(force)
+            return None
+        else:
+            return Image.open(self.filename)
+
+    job_status = property(_job_status)
+    filename = property(_filename)
+
+    class Meta:
+        abstract = True
+
+class ElevationMap(SimulationImageMap):
+    image_root = settings.ELEVATION_MAP_PATH
+    thumbnail_root = os.path.join(settings.THUMBNAIL_PATH, "elevation_cache")
+
+    def generate(self, options, force = False):
+        from riversim.imagery import elevation_map
+        return elevation_map.generate(self, options, force)
+
+    def get_run_parameters(self):
+        return {}
+
+class AerialMap(SimulationImageMap):
+    image_root = settings.GEOTIFF_PATH
+    thumbnail_root = os.path.join(settings.THUMBNAIL_PATH, "aerial_cache")
+    width = models.IntegerField(blank = True, null = True)
+    height = models.IntegerField(blank = True, null = True)
+
+    def generate(self, options, force = False):
+        if not os.path.isfile(self.filename) or force == True:
+            from riversim.imagery import aerial_tiles
+            img = aerial_tiles.generate(self)
+            self.job_complete = True
+            self.save()
+            return img
+        else:
+            return Image.open(self.filename)
+
+    def get_run_parameters(self):
+        return {}
+
+
+class ChannelMap(SimulationImageMap):
+    image_root = settings.CHANNEL_PATH
+    thumbnail_root = os.path.join(settings.THUMBNAIL_PATH, "channel_cache")
+    job_queue = "channel_image"
+
+    def get_run_parameters(self):
+        return {
+          'tile_path': settings.RIVER_TILES_PATH,
+          'geotiff_image': self.simulation.aerialmap.filename, 
+          'channel_image': self.filename,
+          'ortho_tiles': [tile.tile for tile in self.simulation.get_ortho_tiles()],
+          'tile_width': 5000, 
+          'tile_height': 5000 
+         }
+   
+
+class ChannelWidthMap(SimulationImageMap):
+    image_root = settings.CHANNEL_WIDTH_PATH
+    job_queue = "channel_width"
+    thumbnail_root = os.path.join(settings.THUMBNAIL_PATH, "width_cache")
+    image_natural_width = models.IntegerField(blank = True, null = True)
+    image_natural_height = models.IntegerField(blank = True, null = True)
+    channel_width_points = models.TextField(blank = True, null = True)
+
+    def generate(self, options, force = False):
+        if(options != {}):
+            self.channel_width_points = json.dumps(options['points'])
+            self.image_natural_width = int(options['naturalWidth'])
+            self.image_natural_height = int(options['naturalHeight'])
+            self.save()
+        return super(ChannelWidthMap, self).generate(force)
+       
+    def get_run_parameters(self):
+        return {
+           'channel_image' : self.simulation.channelmap.filename,
+           'channel_width_image' : self.simulation.channelwidthmap.filename,
+           'points': self.channel_width_points, 
+           'natural_width': self.image_natural_width, 
+           'natural_height': self.image_natural_height
+        }
