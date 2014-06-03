@@ -447,7 +447,8 @@ class Simulation(models.Model):
     def get_lidar_tile_files(self):
         file_list = []
         for lidar_tile in self.get_lidar_tiles():
-            file_list.append(lidar_tile.tile)
+            filename = os.path.join(settings.LIDAR_TILES_PATH, "%s.las" % (lidar_tile.tile))
+            file_list.append(filename)
 
         return file_list
 
@@ -465,7 +466,8 @@ class Simulation(models.Model):
     def get_ortho_tile_files(self):
         file_list = []
         for ortho_tile in self.get_ortho_tiles():
-            file_list.append(ortho_tile.tile)
+            filename = os.path.join(settings.RIVER_TILES_PATH, "%s.tif" % (ortho_tile.tile))
+            file_list.append(filename)
 
         return file_list
 
@@ -548,7 +550,7 @@ class SimulationImageMap(models.Model):
         return os.path.join(self.thumbnail_root, str(width), "%s.png" % (self.simulation.id))
 
     def get_run_parameters(self):
-        return {}
+        return {"simulation_id" : self.simulation.id}
 
     def _job_status(self):
         if os.path.isfile(self.filename):
@@ -608,8 +610,8 @@ class ElevationMap(SimulationImageMap):
         from riversim.imagery import elevation_map
         return elevation_map.generate(self, options, force)
 
-    def get_run_parameters(self):
-        return {}
+    #def get_run_parameters(self):
+    #    return {}
 
 class AerialMap(SimulationImageMap):
     image_root = settings.GEOTIFF_PATH
@@ -627,8 +629,8 @@ class AerialMap(SimulationImageMap):
         else:
             return Image.open(self.filename)
 
-    def get_run_parameters(self):
-        return {}
+    #def get_run_parameters(self):
+    #    return {}
 
 
 class ChannelMap(SimulationImageMap):
@@ -636,15 +638,15 @@ class ChannelMap(SimulationImageMap):
     thumbnail_root = os.path.join(settings.THUMBNAIL_PATH, "channel_cache")
     job_queue = "channel_image"
 
-    def get_run_parameters(self):
-        return {
-          'tile_path': settings.RIVER_TILES_PATH,
-          'geotiff_image': self.simulation.aerialmap.filename, 
-          'channel_image': self.filename,
-          'ortho_tiles': [tile.tile for tile in self.simulation.get_ortho_tiles()],
-          'tile_width': 5000, 
-          'tile_height': 5000 
-         }
+    #def get_run_parameters(self):
+    #    return {
+    #      'tile_path': settings.RIVER_TILES_PATH,
+    #      'geotiff_image': self.simulation.aerialmap.filename, 
+    #      'channel_image': self.filename,
+    #      'ortho_tiles': [tile.tile for tile in self.simulation.get_ortho_tiles()],
+    #      'tile_width': 5000, 
+    #      'tile_height': 5000 
+    #     }
    
 
 class ChannelWidthMap(SimulationImageMap):
@@ -661,13 +663,13 @@ class ChannelWidthMap(SimulationImageMap):
             self.image_natural_width = int(options['naturalWidth'])
             self.image_natural_height = int(options['naturalHeight'])
             self.save()
-        return super(ChannelWidthMap, self).generate(force)
+        return super(ChannelWidthMap, self).generate(force = force)
        
-    def get_run_parameters(self):
-        return {
-           'channel_image' : self.simulation.channelmap.filename,
-           'channel_width_image' : self.simulation.channelwidthmap.filename,
-           'points': self.channel_width_points, 
-           'natural_width': self.image_natural_width, 
-           'natural_height': self.image_natural_height
-        }
+    #def get_run_parameters(self):
+    #    return {
+    #       'channel_image' : self.simulation.channelmap.filename,
+    #       'channel_width_image' : self.simulation.channelwidthmap.filename,
+    #       'points': self.channel_width_points, 
+    #       'natural_width': self.image_natural_width, 
+    #       'natural_height': self.image_natural_height
+    #    }

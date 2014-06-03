@@ -333,16 +333,27 @@ function createSimulationFromMap() {
     }
 }
 
-function selectSimulationPoint(where)
+function findSimulationMarker(id)
 {
-    map.events.register("click", map , function(e){
+    for (var idx in markers.markers) {
+        if(markers.markers[idx].id == id)
+        {
+            return markers.markers[idx];
+        }
+    }
+
+    return null;
+}
+
+function selectSimulationPoint(e, where)
+{
         var lonlat = null;
 
         var clicklonlat = map.getLonLatFromViewPortPx(e.xy); 
 				
-				if (map.projection != request_projection) { 
-					clicklonlat = clicklonlat.transform(view_projection, request_projection);
-				}
+        if (map.projection != request_projection) {
+            clicklonlat = clicklonlat.transform(view_projection, request_projection);
+        }
 
         var data = {
             "longitude": clicklonlat.lon,
@@ -353,25 +364,34 @@ function selectSimulationPoint(where)
             lonlat = new OpenLayers.LonLat(result.longitude, result.latitude).transform(request_projection, view_projection);
 						*/
             var update_data = {};
-						var icon = null; 
+            var icon = null;
             var flagsize = new OpenLayers.Size(27,36);
             var flagoffset = new OpenLayers.Pixel(-(flagsize.w/2), -flagsize.h);
 			
             if(where == 'start')
             { 
-								icon = new OpenLayers.Icon('/static/images/markers/flag_green.png', flagsize, flagoffset);
+                icon = new OpenLayers.Icon('/static/images/markers/flag_green.png', flagsize, flagoffset);
                 update_data['start_point'] = clicklonlat.lon + " " + clicklonlat.lat
             }
 
             if (where == 'end')
             {
-								icon = new OpenLayers.Icon('/static/images/markers/flag_red.png', flagsize, flagoffset);
+                icon = new OpenLayers.Icon('/static/images/markers/flag_red.png', flagsize, flagoffset);
                 update_data['end_point'] = clicklonlat.lon + " " + clicklonlat.lat
             }
 
             $.get("update", update_data, function(result) {
-                var marker = new OpenLayers.Marker(clicklonlat, icon) ;
-                markers.addMarker(marker);
+                var marker = findSimulationMarker(where + "_marker");
+                if (marker != null)
+                {
+                    marker.lonlat = clicklonlat;
+                    var px = marker.map.getLayerPxFromLonLat(marker.lonlat);
+                    marker.moveTo(px);
+                    marker.draw(px);
+                    markers.redraw();
+                }
+                //var marker = new OpenLayers.Marker(clicklonlat, icon) ;
+                //markers.addMarker(marker);
             });
 
             //var opx = map.getPixelFromLonLat(lonlat);    //getLayerPxFromViewPortPx(e.xy) ;
@@ -385,18 +405,18 @@ function selectSimulationPoint(where)
              */
 
         /*}, "json");*/
-
-    });
+    // Unregister this handler.
+    map.events.remove("click");
 }
 
 function selectSimulationStartPoint()
 {
-    selectSimulationPoint('start');
+    map.events.register("click", map , function(e) { selectSimulationPoint(e, 'start') });
 }
 
 function selectSimulationEndPoint()
 {
-    selectSimulationPoint('end');
+    map.events.register("click", map , function(e) { selectSimulationPoint(e, 'end') });
 }
 
 function reloadLayer(layer)

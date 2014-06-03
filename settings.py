@@ -190,7 +190,8 @@ DEBUG_TOOLBAR_PANELS = (
     'debug_toolbar.panels.logger.LoggingPanel',
 )
 
-DATA_ROOT="/data/riversim"
+DATA_ROOT="/Volumes/Storage/riversim"
+LIDAR_TILES_PATH=os.path.join(DATA_ROOT, "lidar", "LAS")
 RIVER_TILES_PATH=os.path.join(DATA_ROOT, "imagery", "TIF")
 THUMBNAIL_PATH=os.path.join(DATA_ROOT, "thumbnails")
 TILE_CACHE_PATH=os.path.join(DATA_ROOT, "tile_cache")

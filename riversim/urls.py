@@ -4,6 +4,9 @@ from riversim.api import *
 
 api = Api()
 api.register(SimulationResource())
+api.register(ChannelMapResource())
+api.register(ChannelWidthMapResource())
+api.register(AerialMapResource())
 
 urlpatterns = patterns('riversim',
     url(r'login/?$', 'views.public.do_login', name='login'),

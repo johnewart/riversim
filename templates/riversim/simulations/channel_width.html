@@ -7,6 +7,14 @@ var checkInterval = 5000;
 var oldPercentage = null; 
 var intervalId;
 
+function forceRegeneration()
+{
+    $.get(
+            '{% url simulation_channel_width_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}?force_creation=True',
+            function(data) {}
+    );
+}
+
 function getStatus()
 {
   //Perform the AJAX get

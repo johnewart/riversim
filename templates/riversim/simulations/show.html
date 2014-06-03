@@ -68,20 +68,22 @@
             {% if simulation.start_point %}
             var flagsize = new OpenLayers.Size(27,36);
             var flagoffset = new OpenLayers.Pixel(-(flagsize.w/2), -flagsize.h);
-						var icon = new OpenLayers.Icon('/static/images/markers/flag_green.png', flagsize, flagoffset); 
+            var icon = new OpenLayers.Icon('/static/images/markers/flag_green.png', flagsize, flagoffset);
       
             var start_point = new OpenLayers.LonLat({{ simulation.start_point.x }}, {{ simulation.start_point.y }});
             var start_marker = new OpenLayers.Marker(start_point, icon);
+                start_marker.id = 'start_marker';
             markers.addMarker(start_marker);
             {% endif %}
 
             {% if simulation.end_point %}
             var flagsize = new OpenLayers.Size(27,36);
             var flagoffset = new OpenLayers.Pixel(-(flagsize.w/2), -flagsize.h);
-						var icon = new OpenLayers.Icon('/static/images/markers/flag_red.png', flagsize, flagoffset); 
+            var icon = new OpenLayers.Icon('/static/images/markers/flag_red.png', flagsize, flagoffset);
       
             var end_point = new OpenLayers.LonLat({{ simulation.end_point.x }}, {{ simulation.end_point.y }});
             var end_marker = new OpenLayers.Marker(end_point, icon);
+                end_marker.id = 'end_marker';
             markers.addMarker(end_marker);
             {% endif %}
         });

@@ -283,18 +283,20 @@ def channel_width_image_thumbnail(request, simulation_id, thumbnail_width):
 
 def status_or_thumbnail(request, simulation, image, thumbnail_width):
     response_image = None
+    force = False
 
-    if not image.job_complete:
-        force = False
+    if request.GET:
+        if request.GET.get('force_creation', "false").lower() == "true":
+            force = True
+        else:
+            force = False
 
-        if request.GET:
-            force = request.GET.get('force_creation', False)
-
+    if force or not image.job_complete:
         if request.POST:
             options = json.loads(request.raw_post_data)
         else:
             options = {}
-
+        logging.debug("Generating image: %s -> %s" % (options, force))
         image.generate(options, force)
     
     if request.is_ajax(): 
