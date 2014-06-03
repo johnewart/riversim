@@ -1,12 +1,12 @@
 {% extends "base_layout.html" %}
 {% block content %}
     <div id="simulations">
-      <h2>Simulations (<a href="{% url new_simulation %}">Create a new simulation</a>)</h2>
+      <h2>Simulations (<a href="{% url 'new_simulation' %}">Create a new simulation</a>)</h2>
       <h3>Existing Simulations</h3>
     {% if simulations  %}
         <ul>
         {% for simulation in simulations %}
-            <li><a href="{% url show_simulation simulation_id=simulation.id %}">{{ simulation }}</a></li>
+            <li><a href="{% url 'show_simulation' simulation_id=simulation.id %}">{{ simulation }}</a></li>
         {% endfor %}
         </ul>
     {% else %} 

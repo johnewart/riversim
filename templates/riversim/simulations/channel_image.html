@@ -9,8 +9,9 @@ var intervalId;
 
 function forceRegeneration()
 {
+  console.log("Forcing re-generation of image");
   $.get(
-      '{% url simulation_channel_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}?force_creation=true', 
+      "{% url 'simulation_channel_image_thumbnail' simulation_id=simulation.id thumbnail_width=1280 %}?force_creation=true",
       function(data) {}
       );
 }
@@ -47,7 +48,7 @@ function getStatus()
 {
   //Perform the AJAX get
   $.get(
-      '{% url simulation_channel_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}', 
+      '{% url 'simulation_channel_image_thumbnail' simulation_id=simulation.id thumbnail_width=1280 %}',
       function(data) {
         if(data.job_status != null)
         {
@@ -55,7 +56,7 @@ function getStatus()
             { 
             $("#percentage").html(
               "Either your job (" + data.job_handle + ") has not been started or something has gone wrong. If this message persists for a long time, please contact <a href='mailto:john@johnewart.net'>john@johnewart.net</a><br/>" +
-              "Click <a href='javascript:forceRegeneration'>here</a> to force re-generation of the image."
+              "Click <a href='javascript:forceRegeneration()'>here</a> to force re-generation of the image."
              );
             } else { 
                 newPercentage = (parseFloat(data.job_status.percentage));
@@ -117,7 +118,7 @@ $(document).ready(function () {
     you are interested in. Once the crosshairs are on a region you want, then<br/>
     proceed to the next step.
     </p>
-    Next step: <a id="generate_width_image" href="{% url simulation_step simulation_id=simulation.id step_name='channel_width' %}">Generate Channel Width Image</a>
+    Next step: <a id="generate_width_image" href="{% url 'simulation_step' simulation_id=simulation.id step_name='channel_width' %}">Generate Channel Width Image</a>
 </div>
 
 <div id="channel_image_container" style="position: relative"> 
@@ -139,7 +140,7 @@ $(document).ready(function () {
 			var a_href = $(this).attr('href');
       $.ajax({
         type: 'POST',
-				url: "{% url simulation_channel_width_image simulation_id=simulation.id %}", 
+				url: "{% url 'simulation_channel_width_image' simulation_id=simulation.id %}",
 				dataType: 'json',
 				data: JSON.stringify(width_args),
 				success: function(data){

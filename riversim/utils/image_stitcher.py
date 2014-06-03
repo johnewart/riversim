@@ -1,15 +1,10 @@
 import re
-import os
-import glob
 import logging
+
 import Image
-import ImageFont, ImageDraw, ImageOps
+import ImageFont
 
-import numpy
-import osr
-import gdal
-
-from riversim.utils import log_traceback
+from riversim.shortcuts import log_traceback
 
 def stitch_tiles(tile_files, max_image_width=None):
     min_north = None

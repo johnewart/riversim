@@ -10,7 +10,7 @@ var intervalId;
 function forceRegeneration()
 {
     $.get(
-            '{% url simulation_channel_width_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}?force_creation=True',
+            '{% url 'simulation_channel_width_image_thumbnail' simulation_id=simulation.id thumbnail_width=1280 %}?force_creation=True',
             function(data) {}
     );
 }
@@ -19,7 +19,7 @@ function getStatus()
 {
   //Perform the AJAX get
   $.get(
-      '{% url simulation_channel_width_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}', 
+      '{% url 'simulation_channel_width_image_thumbnail' simulation_id=simulation.id thumbnail_width=1280 %}',
       function(data) {
         if(data.job_status != null)
         {
@@ -78,7 +78,7 @@ function getStatus()
 </div>
 
 <div id="next_step" style="display: none">
-    Done generating imagery: <a id="generate_channel_width_image" href="{% url show_simulation simulation_id=simulation.id %}">Show Simulation</a>
+    Done generating imagery: <a id="generate_channel_width_image" href="{% url 'show_simulation' simulation_id=simulation.id %}">Show Simulation</a>
 </div>
 
 <div id="channel_width_image"></div>

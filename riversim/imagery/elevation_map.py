@@ -1,30 +1,5 @@
-
-import re
-import os
-import sys
-import Image
-import json
-
-import numpy
-import osr
-import gdal
-
-from django.core.urlresolvers import reverse
-from django.template import RequestContext
-from django.shortcuts import render_to_response
-from django.http import HttpResponse, HttpResponseRedirect
-from django.contrib.gis.geos.geometry import GEOSGeometry
-from django.db.models import Q
-from django.conf import settings
-
-from utils.usgs import *
-
 from riversim.models import *
-from riversim.utils import closest_point, render_to_json
 
-from gearman import GearmanClient
-
-import logging, traceback
 
 def generate(simulation_id, force_creation = False):
   simulation = Simulation.objects.get(pk = simulation_id)

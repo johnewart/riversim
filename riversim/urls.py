@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from tastypie.api import Api
 from riversim.api import *
 
@@ -8,7 +8,22 @@ api.register(ChannelMapResource())
 api.register(ChannelWidthMapResource())
 api.register(AerialMapResource())
 
-urlpatterns = patterns('riversim',
+from django.contrib.gis import admin
+from django.conf import settings
+
+admin.autodiscover()
+
+urlpatterns = patterns('',
+    # Examples:
+    url(r'^$', 'riversim.views.rivers.home', name='home'),
+    (r'^admin/', include(admin.site.urls)),
+    (r'^static/(?P<path>.*)$', 'django.views.static.serve',
+         {'document_root': settings.STATIC_ROOT, 'show_indexes':True}),
+
+)
+
+
+urlpatterns += patterns('riversim',
     url(r'login/?$', 'views.public.do_login', name='login'),
     url(r'kml/(?P<layer>[^/]+)$', 'views.rivers.kml', name='kml'),
 

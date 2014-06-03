@@ -1,23 +1,11 @@
-import re
-import os
-import sys
-import Image
-import json
+import logging
 
 import numpy
 import osr
 import gdal
 
-from django.contrib.gis.geos.geometry import GEOSGeometry
-from django.db.models import Q
-from django.conf import settings
-
-from utils.usgs import *
-
 from riversim.models import *
 
-
-import logging, traceback
 
 def generate(aerial_map):
     tile_path = settings.RIVER_TILES_PATH
@@ -30,7 +18,7 @@ def generate(aerial_map):
         logging.debug("Tile: %s" % (tile.tile))
         img_tiles.append(imgfile)
 
-    from utils.image_stitcher import stitch_tiles
+    from riversim.utils.image_stitcher import stitch_tiles
     logging.debug("Generating aerial image with width: %d" % (settings.MAX_AERIAL_IMAGE_WIDTH))
     img = stitch_tiles(img_tiles, settings.MAX_AERIAL_IMAGE_WIDTH)
 

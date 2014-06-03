@@ -6,6 +6,11 @@ TODO: Automate this?
 
   insert into spatial_ref_sys (srid, auth_name, auth_srid, proj4text, srtext) values (50000, 'DWR', 1, '+proj=utm +zone=10 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=ft +no_defs', '');
 
+Add to epsg file:
+
+# DWR Projection
+<50000> +proj=utm +zone=10 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=ft +no_defs <>
+
 ## Loading new models
 
 Generate PostGIS data from SHP files with shp2pgsql:

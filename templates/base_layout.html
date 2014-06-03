@@ -8,25 +8,25 @@
         var RIVERSIM = RIVERSIM || {};
         RIVERSIM.layers = {
             "rivers": {
-                "url": "{% url kml layer='rivers' %}"
+                "url": "{% url 'kml' layer='rivers' %}"
             },
             "lidartiles": {
-                "url": "{% url kml layer='lidartiles' %}"
+                "url": "{% url 'kml' layer='lidartiles' %}"
             },
             "selected_lidartiles": {
-                "url": "{% url kml layer='selectedlidartiles' %}"
+                "url": "{% url 'kml' layer='selectedlidartiles' %}"
             },
             "cdec_stations": {
-                "url": "{% url kml layer='cdec_stations' %}"
+                "url": "{% url 'kml' layer='cdec_stations' %}"
             }
         };
         RIVERSIM.urls = {
-            "select_rivers": "{% url select_rivers %}",
-            "filter_rivers": "{% url filter_rivers %}",
-            "create_simulation": "{% url create_simulation  %}",
-            "update_simulation": "{% url update_simulation simulation_id=1 %}",
-            "station_sensors": "{% url station_sensors  %}",
-            "closest_point_on_river": "{% url closest_point_on_river %}"
+            "select_rivers": "{% url 'select_rivers' %}",
+            "filter_rivers": "{% url 'filter_rivers' %}",
+            "create_simulation": "{% url 'create_simulation'  %}",
+            "update_simulation": "{% url 'update_simulation' simulation_id=1 %}",
+            "station_sensors": "{% url 'station_sensors'  %}",
+            "closest_point_on_river": "{% url 'closest_point_on_river' %}"
         };
     </script>
 
@@ -61,7 +61,7 @@
                 {% if user.is_authenticated %}
                     <p>Welcome, {{ user.username }}.</p>
                 {% else %}
-                    <form action="{%  url login %}" method="POST">
+                    <form action="{%  url 'login' %}" method="POST">
                         {% csrf_token %}
                         <input type="hidden" name="narf" value="foo">
                         <input type="text" name="username">
@@ -78,10 +78,10 @@
         </div>
         <ol id="sidebar">
             <li><a href="/" class="black_button">Home</a></li>
-            <li><a href="{% url list_models %}" class="black_button">Models</a></li>
-            <li><a href="{% url list_simulations %}" class="black_button">Simulations</a></li>
-            <li><a href="{% url list_stations %}" class="black_button">Stations</a></li>
-            <li><a href="{% url login %}" class="black_button">Log In</a></li>
+            <li><a href="{% url 'list_models' %}" class="black_button">Models</a></li>
+            <li><a href="{% url 'list_simulations' %}" class="black_button">Simulations</a></li>
+            <li><a href="{% url 'list_stations' %}" class="black_button">Stations</a></li>
+            <li><a href="{% url 'login' %}" class="black_button">Log In</a></li>
         </ol>
     </div>
 </body>

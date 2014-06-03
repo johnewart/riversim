@@ -1,6 +1,7 @@
 # Django settings for riversim project.
 import os
 import logging
+from os.path import dirname, abspath
 
 logging.basicConfig(
     level = logging.DEBUG,
@@ -9,7 +10,7 @@ logging.basicConfig(
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = dirname(dirname(abspath(__file__)))  # os.path.dirname(__file__)
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -110,7 +111,7 @@ MIDDLEWARE_CLASSES = (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 )
 
-ROOT_URLCONF = 'flumen.urls'
+ROOT_URLCONF = 'riversim.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -178,28 +179,19 @@ GEARMAN_SERVERS = ['127.0.0.1']
 # debug toolbar
 INTERNAL_IPS = ('127.0.0.1',)
 
-DEBUG_TOOLBAR_PANELS = (
-    'debug_toolbar.panels.version.VersionDebugPanel',
-    'debug_toolbar.panels.timer.TimerDebugPanel',
-    'debug_toolbar.panels.settings_vars.SettingsVarsDebugPanel',
-    'debug_toolbar.panels.headers.HeaderDebugPanel',
-    'debug_toolbar.panels.request_vars.RequestVarsDebugPanel',
-    'debug_toolbar.panels.template.TemplateDebugPanel',
-    'debug_toolbar.panels.sql.SQLDebugPanel',
-    'debug_toolbar.panels.signals.SignalDebugPanel',
-    'debug_toolbar.panels.logger.LoggingPanel',
-)
+CACHE_ROOT="/Volumes/Storage/riversim"
+DATA_ROOT="/Volumes/GIS/riversim"
 
-DATA_ROOT="/Volumes/Storage/riversim"
 LIDAR_TILES_PATH=os.path.join(DATA_ROOT, "lidar", "LAS")
 RIVER_TILES_PATH=os.path.join(DATA_ROOT, "imagery", "TIF")
-THUMBNAIL_PATH=os.path.join(DATA_ROOT, "thumbnails")
-TILE_CACHE_PATH=os.path.join(DATA_ROOT, "tile_cache")
-GEOTIFF_PATH=os.path.join(DATA_ROOT, "geotiff")
-CHANNEL_PATH=os.path.join(DATA_ROOT, "channels")
-CHANNEL_WIDTH_PATH=os.path.join(DATA_ROOT, "channel_widths")
-ELEVATION_MAP_PATH=os.path.join(DATA_ROOT, "elevation_maps")
-TILECACHE_CACHE=os.path.join(DATA_ROOT, "wms_tiles")
+
+THUMBNAIL_PATH=os.path.join(CACHE_ROOT, "thumbnails")
+TILE_CACHE_PATH=os.path.join(CACHE_ROOT, "tile_cache")
+GEOTIFF_PATH=os.path.join(CACHE_ROOT, "geotiff")
+CHANNEL_PATH=os.path.join(CACHE_ROOT, "channels")
+CHANNEL_WIDTH_PATH=os.path.join(CACHE_ROOT, "channel_widths")
+ELEVATION_MAP_PATH=os.path.join(CACHE_ROOT, "elevation_maps")
+TILECACHE_CACHE=os.path.join(CACHE_ROOT, "wms_tiles")
 
 MAX_AERIAL_IMAGE_WIDTH=20000
 

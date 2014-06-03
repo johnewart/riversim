@@ -12,7 +12,7 @@
 				$(document).ready(function() {
 
 						map = new OpenLayers.Map('map', { numZoomLevels: 22 } );
-						var aerial_layer = new OpenLayers.Layer.WMS( "aerial", "{% url wms %}",
+						var aerial_layer = new OpenLayers.Layer.WMS( "aerial", "{% url 'wms' %}",
 							{
 								layers: '{{ simulation.id }}_aerial', 
 								format: 'image/png' 
@@ -25,7 +25,7 @@
 						
 						map.setLayerIndex(aerial_layer, 10);
 
-						var channel_layer = new OpenLayers.Layer.WMS("Channel Layer", "{% url wms %}", 
+						var channel_layer = new OpenLayers.Layer.WMS("Channel Layer", "{% url 'wms' %}",
 							{ 
 								layers: "{{ simulation.id }}_channels", 
 								format: "image/png" , 
@@ -40,7 +40,7 @@
 						map.addLayer(channel_layer);
 						map.setLayerIndex(channel_layer, 50);
 				
-						var width_layer = new OpenLayers.Layer.WMS("Width Layer", "{% url wms %}", 
+						var width_layer = new OpenLayers.Layer.WMS("Width Layer", "{% url 'wms' %}",
 							{ 
 								layers: "{{ simulation.id }}_width", 
 								format: "image/png" , 
@@ -100,7 +100,7 @@
     </div>
 
     <div id="simulation">
-        <h1><a href="{%  url edit_simulation simulation_id=simulation.id %}">{{ simulation.name }}</a></h1>
+        <h1><a href="{%  url 'edit_simulation' simulation_id=simulation.id %}">{{ simulation.name }}</a></h1>
         <h2>Simulation Data</h2>
         <ul>
             <li>Extent: {{ simulation.region.extent }}</li>
@@ -119,12 +119,12 @@
         <h2>Stations</h2>
         <div>
             {% for station in simulation.stations.all %}
-                <a href="{% url show_station station_id=station.id %}">{{ station }}</a>&nbsp;
+                <a href="{% url 'show_station' station_id=station.id %}">{{ station }}</a>&nbsp;
             {% endfor %}
         </div>
 
         <h2>Runs</h2>
-        <a href="{% url new_simulation_run simulation_id=simulation.id %}">Create New Run</a>
+        <a href="{% url 'new_simulation_run' simulation_id=simulation.id %}">Create New Run</a>
         <ul>
             {% for run in simulation.run_set.all %}
                 <li>{{ run }}</li>
@@ -135,9 +135,9 @@
     <h2>Imagery</h2>
 		<div class="imagery">
 			<ul>
-				<li><a href="{% url simulation_step simulation_id=simulation.id step_name="aerial_image" %}">Aerial Image</a></li>
-				<li><a href="{% url simulation_step simulation_id=simulation.id step_name="channel_image" %}">Channel Image</a></li>
-				<li><a href="{% url simulation_step simulation_id=simulation.id step_name="channel_width" %}">Channel Width Image</a></li>
+				<li><a href="{% url 'simulation_step' simulation_id=simulation.id step_name="aerial_image" %}">Aerial Image</a></li>
+				<li><a href="{% url 'simulation_step' simulation_id=simulation.id step_name="channel_image" %}">Channel Image</a></li>
+				<li><a href="{% url 'simulation_step' simulation_id=simulation.id step_name="channel_width" %}">Channel Width Image</a></li>
 			</ul>
    </div>
 

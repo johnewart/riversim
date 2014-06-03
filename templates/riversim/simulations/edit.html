@@ -3,7 +3,7 @@
 {% block content %}
     <div id="edit_simulation">
         <h1>Editing {{ simulation.name }}</h1>
-        <form action="{% url update_simulation simulation_id=simulation.id %}" method="post">
+        <form action="{% url 'update_simulation' simulation_id=simulation.id %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="simulation_id" value="{{ simulation.id }}"><br/>
             <label>Name:</label><input type="text" name="simulation_name"><br/>

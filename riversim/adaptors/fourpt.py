@@ -1,4 +1,4 @@
-from utils.usgs import usgs_elevation
+from riversim.utils.usgs import usgs_elevation
 from gearman import GearmanClient
 from django.conf import settings
 

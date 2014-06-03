@@ -21,8 +21,6 @@ class Migration(SchemaMigration):
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('description', self.gf('django.db.models.fields.TextField')()),
             ('measurement_unit', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('sensor_id', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('source', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['riversim.DataSource'])),
         ))
         db.send_create_signal('riversim', ['SensorType'])
 
@@ -152,7 +150,7 @@ class Migration(SchemaMigration):
             ('lastaffine', self.gf('django.db.models.fields.CharField')(max_length=64)),
             ('lastdirect', self.gf('django.db.models.fields.CharField')(max_length=16)),
             ('desc1', self.gf('django.db.models.fields.CharField')(max_length=254)),
-            ('geom', self.gf('django.contrib.gis.db.models.fields.PolygonField')(srid=50000, db_column='the_geom')),
+            ('geom', self.gf('django.contrib.gis.db.models.fields.MultiPolygonField')(srid=50000, db_column='the_geom')),
         ))
         db.send_create_signal('riversim', ['LidarTile'])
 

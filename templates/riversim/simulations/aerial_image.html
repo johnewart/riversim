@@ -17,7 +17,7 @@ $(document).ready(function () {
 
   //Perform the AJAX get
   $.get(
-      '{% url simulation_aerial_image_thumbnail simulation_id=simulation.id thumbnail_width=1280 %}', 
+      "{% url 'simulation_aerial_image_thumbnail' simulation_id=simulation.id thumbnail_width=1280 %}",
       function(data) {
         $("#aerial_image").append('<img id="image" src="' + data.image_url + '" width="800"/>');
       }
@@ -34,7 +34,7 @@ $(document).ready(function () {
 </div>
 
 <div id="next_step">
-    Next step: <a href="{% url simulation_step simulation_id=simulation.id step_name='channel_image' %}">Generate Channel Image</a>
+    Next step: <a href="{% url 'simulation_step' simulation_id=simulation.id step_name='channel_image' %}">Generate Channel Image</a>
 </div>
 
 <div id="aerial_image"> 
