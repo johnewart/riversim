@@ -13,8 +13,8 @@
                 <label>Stations:</label> {% for station in simulation.stations.all %}<a href="{% url 'show_station' station_id=station.id %}">{{ station }}</a> {% endfor %}<br/>
                 <label>Description:</label> {{ simulation.description }}<br/>
                 <label>Aerial image:</label> <br/>
-                    <img src="{%  url simulation_aerial_image_thumbnail simulation_id=simulation.id thumbnail_width=500 %}"><br/>
-                    <a href="{%  url simulation_aerial_image_thumbnail simulation_id=simulation.id thumbnail_width=5000 %}" target="_blank">Open larger image</a>
+                    <img src="{%  url 'simulation_aerial_image_thumbnail' simulation_id=simulation.id thumbnail_width=500 %}"><br/>
+                    <a href="{%  url 'simulation_aerial_image_thumbnail' simulation_id=simulation.id thumbnail_width=5000 %}" target="_blank">Open larger image</a>
                 </p>
             </li>
         {% endfor %}

@@ -1,9 +1,11 @@
 Django==1.6.5
-South==0.7.3
+South==1.0
 django-debug-toolbar
 django-extensions
 psycopg2
 lxml
+numpy
+gdal
 #-e git://github.com/rosarior/django-sendfile.git#egg=django-sendfile
 gearman
 django-tastypie

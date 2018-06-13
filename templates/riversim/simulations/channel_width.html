@@ -26,7 +26,10 @@ function getStatus()
 
             if(data.job_status.percentage == -1)
             { 
-              $("#percentage").html("Either your job has not been started or something has gone wrong. If this message persists for a long time, please contact <a href='mailto:john@johnewart.net'>john@johnewart.net</a>");
+              $("#percentage").html(
+                "Either your job (" + data.job_handle + ") has not been started or something has gone wrong. If this message persists for a long time, please contact <a href='mailto:john@johnewart.net'>john@johnewart.net</a><br/>" +
+                "Click <a href='javascript:forceRegeneration()'>here</a> to force re-generation of the image."
+              );
             } else { 
               newPercentage = (parseFloat(data.job_status.percentage));
               completed = data.job_status.completed.toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");

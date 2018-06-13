@@ -8,6 +8,15 @@ logging.basicConfig(
     format = '%(asctime)s %(levelname)s %(message)s',
 )
 
+def riversim_dir(root, *subdir):
+    full_path = os.path.join(root, *subdir)
+    try:
+        os.makedirs(full_path)
+    except:
+        None
+    return full_path
+
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 BASE_DIR = dirname(dirname(abspath(__file__)))  # os.path.dirname(__file__)
@@ -179,19 +188,19 @@ GEARMAN_SERVERS = ['127.0.0.1']
 # debug toolbar
 INTERNAL_IPS = ('127.0.0.1',)
 
-CACHE_ROOT="/Volumes/Storage/riversim"
-DATA_ROOT="/Volumes/GIS/riversim"
+CACHE_ROOT="/Users/jewart/riversim/cache"
+DATA_ROOT="/Users/jewart/riversim/data"
 
-LIDAR_TILES_PATH=os.path.join(DATA_ROOT, "lidar", "LAS")
-RIVER_TILES_PATH=os.path.join(DATA_ROOT, "imagery", "TIF")
+LIDAR_TILES_PATH=riversim_dir(DATA_ROOT, "lidar", "LAS")
+RIVER_TILES_PATH=riversim_dir(DATA_ROOT, "imagery", "TIF")
 
-THUMBNAIL_PATH=os.path.join(CACHE_ROOT, "thumbnails")
-TILE_CACHE_PATH=os.path.join(CACHE_ROOT, "tile_cache")
-GEOTIFF_PATH=os.path.join(CACHE_ROOT, "geotiff")
-CHANNEL_PATH=os.path.join(CACHE_ROOT, "channels")
-CHANNEL_WIDTH_PATH=os.path.join(CACHE_ROOT, "channel_widths")
-ELEVATION_MAP_PATH=os.path.join(CACHE_ROOT, "elevation_maps")
-TILECACHE_CACHE=os.path.join(CACHE_ROOT, "wms_tiles")
+THUMBNAIL_PATH=riversim_dir(CACHE_ROOT, "thumbnails")
+TILE_CACHE_PATH=riversim_dir(CACHE_ROOT, "tile_cache")
+GEOTIFF_PATH=riversim_dir(CACHE_ROOT, "geotiff")
+CHANNEL_PATH=riversim_dir(CACHE_ROOT, "channels")
+CHANNEL_WIDTH_PATH=riversim_dir(CACHE_ROOT, "channel_widths")
+ELEVATION_MAP_PATH=riversim_dir(CACHE_ROOT, "elevation_maps")
+TILECACHE_CACHE=riversim_dir(CACHE_ROOT, "wms_tiles")
 
 MAX_AERIAL_IMAGE_WIDTH=20000
 

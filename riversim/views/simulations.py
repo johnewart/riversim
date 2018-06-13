@@ -275,7 +275,7 @@ def status_or_thumbnail(request, simulation, image, thumbnail_width):
 
     if force or not image.job_complete:
         if request.POST:
-            options = json.loads(request.raw_post_data)
+            options = json.loads(request.body)
         else:
             options = {}
         logging.debug("Generating image: %s -> %s" % (options, force))

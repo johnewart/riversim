@@ -132,15 +132,15 @@ $(document).ready(function () {
       event.preventDefault();
 
 			var width_args = {
-					'naturalWidth': channel_image.naturalWidth,
-          'naturalHeight': channel_image.naturalHeight,
-          'generate_width': 'true',
-          'points': points
+			    'naturalWidth': channel_image.naturalWidth,
+                'naturalHeight': channel_image.naturalHeight,
+                'generate_width': 'true',
+                'points': points
 			};
 			var a_href = $(this).attr('href');
       $.ajax({
         type: 'POST',
-				url: "{% url 'simulation_channel_width_image' simulation_id=simulation.id %}",
+				url: "{% url 'simulation_channel_width_image' simulation_id=simulation.id %}?force_creation=true",
 				dataType: 'json',
 				data: JSON.stringify(width_args),
 				success: function(data){
